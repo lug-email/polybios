@@ -1,0 +1,37 @@
+{
+  "name": "polybios",
+  "version": "0.0.1",
+  "description": "Just a ugly frontend for OpenPGP.js",
+  "main": "server.js",
+  "dependencies": {
+    "body-parser": "^1.12.2",
+    "connect": "^3.3.5",
+    "openpgp": "^1.0.1",
+    "serve-static": "^1.9.2"
+  },
+  "scripts": {
+    "dev": "cozy-dev undeploy && cozy-dev deploy 9253 && nodemon server 9253",
+    "start": "node server.js",
+    "postinstall": "cp node_modules/openpgp/dist/openpgp.min.js public/js/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/clochix/polybios.git"
+  },
+  "author": "Clochix <clochix@clochix.net>",
+  "license": "GPL v3",
+  "bugs": {
+    "url": "https://github.com/clochix/polybios/issues"
+  },
+  "homepage": "https://github.com/clochix/polybios",
+  "icon-path": "lock.png",
+  "keywords": [
+    "openpgp"
+  ],
+  "cozy-permissions": {
+    "PGPKeys": {
+      "description": "Read and manage PGP keys"
+    }
+  },
+  "cozy-displayName": "Polybios"
+}

@@ -1,0 +1,38 @@
+html {
+  background-color: white;
+}
+#templates {
+  display: none;
+}
+/* Pure */
+#nav .pure-menu .actions {
+  text-align: center;
+}
+textarea {
+  font-family: monospace;
+  font-size: .7em;
+}
+#keysList {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+#keysList li {
+  padding: .5em 1em;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+}
+#keysList li:nth-of-type(2n+1) {
+  background-color: #EEE;
+}
+.keyDetail dt {
+  float: left;
+  margin: 0 1em 0 0;
+  text-align: right;
+  vertical-align: middle;
+  width: 8em;
+  font-weight: bold;
+}
+.keyDetail dd {
+  margin-left: 9em;
+}

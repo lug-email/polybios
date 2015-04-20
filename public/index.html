@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="favicon.png">
+    <link type="text/css" rel="stylesheet" href="css/pure-min.css">
+    <link type="text/css" rel="stylesheet" href="css/pure-layout.css">
+    <link type="text/css" rel="stylesheet" href="css/polybios.css">
+    <script defer src="js/activity-client.js"></script>
+    <script defer src="js/openpgp.js"></script>
+    <script defer src="js/polybios.js"></script>
+    <title>Polybios - Manage your PGP keys</title>
+  </head>
+  <body>
+    <div id="layout" class="content pure-g">
+      <div id="nav" class="pure-u">
+        <a href="#" class="nav-menu-button">Menu</a>
+
+        <div class="pure-menu">
+          <div class="pure-menu-heading">Polybios</div>
+          <div class="actions">
+            <button class="primary-button pure-button" data-action="import">Import</button>
+            <button class="primary-button pure-button" data-action="generate">Generate</button>
+            <button class="primary-button pure-button" data-action="sign">Sign</button>
+          </div>
+          <!--
+          <ul class="pure-menu-list">
+            <li class="pure-menu-item"><a href="#" class="pure-menu-link">Public keys</a></li>
+            <li class="pure-menu-item"><a href="#" class="pure-menu-link">Private keys</a></li>
+          </ul>
+          -->
+        </div>
+      </div>
+
+      <div id="list" class="pure-u-1-5">
+        <ul id="keysList">
+        </ul>
+      </div>
+
+      <div id="main" class="pure-u-4-5">
+        <!--
+        <div class="email-content-header pure-g">
+          <div class="pure-u-1-2">
+            <button class="secondary-button pure-button"></button>
+            <button class="secondary-button pure-button"></button>
+            <button class="secondary-button pure-button"></button>
+          </div>
+        </div>
+        -->
+      </div>
+    </div>
+    <div id="templates">
+      <!-- Keylist {{{ -->
+      <li data-template='keysList' data-action='keyDetail'>
+
+      </li>
+      <!-- }}} Keylist -->
+      <!-- Generate {{{ -->
+      <form data-template="generate" class="pure-form pure-form-aligned"> 
+        <legend>Generate key</legend>
+        <fieldset>
+          <div class="pure-control-group"> 
+            <label class=" " for="size">Size</label> 
+            <input type="range" class="" name="size" min="1024" max="4096" step="1024" value="2048" /> 
+            <span class="" name="size-value"></span> 
+          </div> 
+          <div class="pure-control-group"> 
+            <label class=" " for="user">User name</label> 
+            <input type="text" class="" name="username" /> 
+          </div> 
+          <div class="pure-control-group"> 
+            <label class=" " for="user">User address</label> 
+            <input type="text" class="" name="address" /> 
+          </div> 
+          <div class="pure-control-group"> 
+            <label class=" " for="passphrase">Passphrase</label> 
+            <input type="password" class="" name="passphrase" /> 
+          </div> 
+          <div class="pure-control-group"> 
+            <button class="pure-button" name="generate">Generate</button> 
+            <button class="pure-button" name="save" disabled>Save</button> 
+          </div> 
+          <div class="pure-control-group"> 
+            <div class=""> 
+              <pre name="key"></pre> 
+            </div> 
+          </div> 
+        </fieldset>
+      </form>;
+      <!-- }}} Generate -->
+      <!-- Import {{{ -->
+      <form data-template="import" class="pure-form pure-form-aligned">
+        <fieldset>
+          <div class="pure-control-group">
+            <label class="" for="user">User</label>
+            <input type="text" class="form-control" name="user" />
+            <button class="pure-button" name="search">Search</button> 
+          </div>
+          <p>Paste here the key to import</p>
+          <div class="pure-control-group"> 
+            <textarea class="pure-input-1" name="key" rows="20"></textarea> 
+          </div> 
+          <div class="pure-group"> 
+            <button class="pure-button pure-button-primary" name="save">Import</button> 
+          </div>
+        </fieldset>
+      </form>;
+      <!-- }}} Import -->
+      <!-- Sign {{{ -->
+      <form data-template="sign" class="pure-form pure-form-aligned">
+        <fieldset>
+          <div class="pure-control-group">
+            <label class="" for="user">From</label>
+            <select name="key" />
+            </select>
+          </div>
+          <div class="pure-control-group">
+            <label class="" for="dest">To</label>
+            <input type="text" class="form-control" name="dest" />
+          </div>
+          <div class="pure-control-group">
+            <label class="" for="passphrase">Passphrase</label>
+            <input type="password" class="form-control" name="passphrase" />
+          </div>
+          <div class="pure-control-group"> 
+            <p name="info"></p>
+          </div>
+          <div class="pure-control-group"> 
+            <textarea class="pure-input-1" name="message" rows="20"></textarea> 
+          </div> 
+          <div class="pure-control-group">
+            <button class="pure-button pure-button-primary" name="sign">Sign</button>
+            <button class="pure-button pure-button-primary" name="encrypt">Encrypt</button>
+            <button class="pure-button pure-button-primary" name="signAndEncrypt">Sign and Encrypt</button>
+            <button class="pure-button pure-button-primary" name="decrypt">Decrypt</button>
+          </div>
+        </fieldset>
+      </form>;
+      <!-- }}} Sign -->
+      <!-- keyDetail {{{ -->
+      <div data-template="keyDetail" class="keyDetail">
+        <h2><span name="id"></span> — <span name="user"></span></h2>
+        <div class="actions">
+          <button class="pure-button pure-button-primary" name="remove">remove</button>
+        </div>
+        <dl>
+          <dt>Users</dt>
+          <dd name="users"></dd>
+          <dt>Type</dt>
+          <dd name="type"></dd>
+          <dt>Fingerprint</dt>
+          <dd name="fingerprint"></dd>
+          <dt>Algo</dt>
+          <dd name="algo"></dd>
+          <dt>Size</dt>
+          <dd name="size"></dd>
+          <dt>Hash algorithm</dt>
+          <dd name="hash"></dd>
+          <dt>Created</dt>
+          <dd name="created"></dd>
+          <dt>Expiration time</dt>
+          <dd name="expiration"></dd>
+        </dl>
+        <pre name="armor"></pre>
+        <pre name="publicKey"></pre>
+      </div>
+      <!-- }}} keyDetail -->
+    </div>
+  </body>
+</html>
+
