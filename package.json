@@ -33,5 +33,6 @@
       "description": "Read and manage PGP keys"
     }
   },
-  "cozy-displayName": "Polybios"
+  "cozy-displayName": "Polybios",
+  "icon-path": "icon.png"
 }
