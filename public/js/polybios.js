@@ -345,8 +345,6 @@
       $.size.addEventListener('input', setSizeValue);
       setSizeValue();
       $.save.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
         wallet.privateKeys.push(privateKey);
         alert("Key added", privateKey);
         wallet.store();
@@ -354,8 +352,6 @@
         target.innerHTML = '';
       });
       $.generate.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
         $.generate.disabled = true;
         var keyOptions = {
           numBits: $.size.value,
@@ -426,8 +422,6 @@
       });
       $.searchKeyserver.addEventListener('click', function (e) {
         var xhr;
-        e.preventDefault();
-        e.stopPropagation();
         xhr = new XMLHttpRequest();
         xhr.open('GET', 'https://subset.pool.sks-keyservers.net/pks/lookup?op=get&search=' + $.user.value, true);
         xhr.onload = function () {
@@ -489,8 +483,6 @@
       // Sign
       $.sign.addEventListener('click', function (e) {
         var privateKey, errors;
-        e.preventDefault();
-        e.stopPropagation();
         privateKey = wallet.privateKeys.getForId($.key.value);
         if (!privateKey.decrypt($.passphrase.value)) {
           errors.push("Wrong passphrase");
@@ -517,8 +509,6 @@
       });
       // Encrypt
       $.encrypt.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
         var keys = [], errors = [];
         $.dest.value.split(',').map(function (user) {
           var key = wallet.publicKeys.getForAddress(user.trim());
@@ -553,8 +543,6 @@
       });
       // Sign and Encrypt
       $.signAndEncrypt.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
         var keys = [], errors = [], privateKey;
         $.dest.value.split(',').map(function (user) {
           var key = wallet.publicKeys.getForAddress(user.trim());
@@ -593,8 +581,6 @@
       });
       // Decrypt
       $.decrypt.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
         var privateKey, errors = [], armored, keys, res;
         armored = openpgp.message.readArmored($.message.value);
         keys = [];
@@ -650,7 +636,7 @@
         //}).join(', ');
         var primary = key.primaryKey;
         template.dataset.key = primary.keyid.toHex();
-        template.innerHTML += ' ' + key.getUserIds().join(', ');
+        template.innerHTML += ' ' + key.users.map(function (user) { if (user.userId) { return user.userId.userid; } }).join(', ');
         target.appendChild(template);
       });
     },

@@ -20,9 +20,9 @@
         <div class="pure-menu">
           <div class="pure-menu-heading">Polybios</div>
           <div class="actions">
-            <button class="primary-button pure-button" data-action="import">Import</button>
-            <button class="primary-button pure-button" data-action="generate">Generate</button>
-            <button class="primary-button pure-button" data-action="sign">Sign</button>
+            <input type="button" class="primary-button pure-button" data-action="import" value="Import" />
+            <input type="button" class="primary-button pure-button" data-action="generate" value="Generate" />
+            <input type="button" class="primary-button pure-button" data-action="sign" value="Sign" />
           </div>
           <!--
           <ul class="pure-menu-list">
@@ -33,21 +33,12 @@
         </div>
       </div>
 
-      <div id="list" class="pure-u-1-5">
+      <div id="list" class="pure-u-1-24">
         <ul id="keysList">
         </ul>
       </div>
 
-      <div id="main" class="pure-u-4-5">
-        <!--
-        <div class="email-content-header pure-g">
-          <div class="pure-u-1-2">
-            <button class="secondary-button pure-button"></button>
-            <button class="secondary-button pure-button"></button>
-            <button class="secondary-button pure-button"></button>
-          </div>
-        </div>
-        -->
+      <div id="main" class="pure-u-23-24">
       </div>
     </div>
     <div id="templates">
@@ -62,24 +53,24 @@
         <fieldset>
           <div class="pure-control-group"> 
             <label class=" " for="size">Size</label> 
-            <input type="range" class="" name="size" min="1024" max="4096" step="1024" value="2048" /> 
+            <input type="range" class="pure-input-2-3" name="size" min="1024" max="4096" step="1024" value="2048" /> 
             <span class="" name="size-value"></span> 
           </div> 
           <div class="pure-control-group"> 
             <label class=" " for="user">User name</label> 
-            <input type="text" class="" name="username" /> 
+            <input type="text" class="pure-input-2-3" name="username" /> 
           </div> 
           <div class="pure-control-group"> 
             <label class=" " for="user">User address</label> 
-            <input type="text" class="" name="address" /> 
+            <input type="text" class="pure-input-2-3" name="address" /> 
           </div> 
           <div class="pure-control-group"> 
             <label class=" " for="passphrase">Passphrase</label> 
-            <input type="password" class="" name="passphrase" /> 
+            <input type="password" class="pure-input-2-3" name="passphrase" /> 
           </div> 
           <div class="pure-control-group"> 
-            <button class="pure-button" name="generate">Generate</button> 
-            <button class="pure-button" name="save" disabled>Save</button> 
+            <input type="button" class="pure-button" name="generate" value="Generate" />
+            <input type="button" class="pure-button" name="save" disabled value="Save" />
           </div> 
           <div class="pure-control-group"> 
             <div class=""> 
@@ -94,15 +85,22 @@
         <fieldset>
           <div class="pure-control-group">
             <label class="" for="user">User</label>
-            <input type="text" class="form-control" name="user" />
-            <button class="pure-button" name="search">Search</button> 
+            <input type="text" class="" name="user" />
+          </div>
+          <div class="pure-control-group">
+            <input type="button" class="pure-button" name="searchWhiteout" value="Search on Whiteout" />
+            <input type="button" class="pure-button" name="searchKeybase" value="Search on Keybase" />
+            <input type="button" class="pure-button" name="searchKeyserver" disabled value="Search on keyserver" />
           </div>
           <p>Paste here the key to import</p>
           <div class="pure-control-group"> 
-            <textarea class="pure-input-1" name="key" rows="20"></textarea> 
+            <textarea class="pure-input-1" name="key" rows="20"></textarea>
           </div> 
-          <div class="pure-group"> 
-            <button class="pure-button pure-button-primary" name="save">Import</button> 
+          <div class="pure-control-group"> 
+            <input type="button" class="pure-button" name="view" value="view" />
+            <input type="button" class="pure-button pure-button-primary" name="save" value="Import" />
+          </div>
+          <div name="importDetail">
           </div>
         </fieldset>
       </form>;
@@ -117,11 +115,11 @@
           </div>
           <div class="pure-control-group">
             <label class="" for="dest">To</label>
-            <input type="text" class="form-control" name="dest" />
+            <input type="text" class="pure-input-2-3" name="dest" />
           </div>
           <div class="pure-control-group">
             <label class="" for="passphrase">Passphrase</label>
-            <input type="password" class="form-control" name="passphrase" />
+            <input type="password" class="pure-input-2-3" name="passphrase" />
           </div>
           <div class="pure-control-group"> 
             <p name="info"></p>
@@ -130,10 +128,10 @@
             <textarea class="pure-input-1" name="message" rows="20"></textarea> 
           </div> 
           <div class="pure-control-group">
-            <button class="pure-button pure-button-primary" name="sign">Sign</button>
-            <button class="pure-button pure-button-primary" name="encrypt">Encrypt</button>
-            <button class="pure-button pure-button-primary" name="signAndEncrypt">Sign and Encrypt</button>
-            <button class="pure-button pure-button-primary" name="decrypt">Decrypt</button>
+            <input type="button" class="pure-button pure-button-primary" name="sign" value="Sign" />
+            <input type="button" class="pure-button pure-button-primary" name="encrypt" value="Encrypt" />
+            <input type="button" class="pure-button pure-button-primary" name="signAndEncrypt" value="Sign and Encrypt" />
+            <input type="button" class="pure-button pure-button-primary" name="decrypt" value="Decrypt" />
           </div>
         </fieldset>
       </form>;
