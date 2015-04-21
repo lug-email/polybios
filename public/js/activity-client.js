@@ -59,7 +59,7 @@ function modal(content) {
   var mod  = document.createElement('div'),
       cell = document.createElement('div'),
       overlay = document.createElement('div');
-  mod.setAttribute('style', 'display: inline-block; max-width: 50%; background: white');
+  mod.setAttribute('style', 'display: inline-block; max-width: 50%; max-height: 90vh; background: white; padding: 1em; border-radius: .5em; overflow: auto; box-shadow: .5em .5em .5em #000;');
   cell.setAttribute('style', 'display:table-cell; vertical-align:middle; text-align:center');
   overlay.setAttribute('style', 'position: fixed; top: 0; left: 0;display:table; width: 100%; height: 100%; background: rgba(0,0,0,.5)');
   if (content instanceof Element) {

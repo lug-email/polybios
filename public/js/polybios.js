@@ -1,4 +1,4 @@
-//jshint browser: true, maxstatements: 30
+//jshint browser: true, maxstatements: 35
 /*global openpgp:true */
 (function (root) {
   "use strict";
@@ -21,6 +21,15 @@
     });
     return res;
   }
+
+  function getEnumValues(key) {
+    var e = openpgp.enums[key], res = {};
+    Object.keys(e).forEach(function (a, b) {
+      res[b] = a;
+    });
+    return res;
+  }
+
   function PolybiosStore(cb) {
 
     var self = this,
@@ -115,17 +124,22 @@
     }
   });
 
-  function getDetailTemplate(key) {
+  function getDetailTemplate(key, showImport) {
     console.log(key);
-    var template, $$, primary;
+    var template, $$, primary, importBtn;
     template = document.querySelector('#templates [data-template="keyDetail"]').cloneNode(true);
     $$ = qsv(template);
     primary = key.primaryKey;
     $$('armor', key.armor());
+    $$('status', getEnumValues('keyStatus')[key.verifyPrimaryKey()]);
     $$('expiration', key.getExpirationTime() || 'never');
     $$('hash', openpgp.util.get_hashAlgorithmString(key.getPreferredHashAlgorithm()));
     $$('user', key.getPrimaryUser().user.userId.userid);
-    $$('users', key.users.map(function (user) { if (user.userId) { return user.userId.userid; } }).join(', '));
+    $$('users', key.users.map(function (user) {
+      if (user.userId) {
+        return user.userId.userid + ' (' + getEnumValues('keyStatus')[user.verify(primary)] + ')';
+      }
+    }).join(', '));
     $$('public', key.isPublic());
     $$('algo', primary.algorithm);
     $$('created', primary.created.toString());
@@ -144,13 +158,51 @@
     key.users.forEach(function (user) {
       var img;
       if (user.userAttribute) {
-        console.log(user.userAttribute);
         img = document.createElement('img');
         img.src = 'data:image/jpeg;base64,' + btoa(user.userAttribute.write().substr(19));
         $$('photo').appendChild(img);
       }
     });
+    // Signatures
+    key.users.forEach(function (user) {
+      if (user.userId) {
+        var res = "<li>" + user.userId.userid + ' : ';
+        if (Array.isArray(user.otherCertifications) && user.otherCertifications.length > 0) {
+          user.otherCertifications.forEach(function (sig) {
+            var issuer = sig.issuerKeyId.toHex().toUpperCase();
+            //res += ' signed by <a href="http://pgp.mit.edu/pks/lookup?op=get&search=0x' + issuer + '" target="_blank">' + issuer + '</a>';
+            res += ' signed by <a data-href="https://keys.whiteout.io/publickey/key/' + issuer + '" data-action="showRemoteKey" href="javascript:">' + issuer + '</a>';
+            res += ' on ' + sig.created.toISOString();
+            if (sig.trustLevel > 0 && sig.trustAmount > 119) {
+              res += '(trusted)';
+            }
+            res += '; ';
+          });
+        } else {
+          res += 'No signature\n';
+        }
+        res += "</li>\n";
+        $$('sigs').innerHTML += res;
+      }
+    });
     template.dataset.key = primary.keyid.toHex();
+    if (showImport) {
+      importBtn = document.createElement('input');
+      importBtn.setAttribute('type', 'button');
+      importBtn.setAttribute('class', 'pure-button pure-button-primary');
+      importBtn.value = 'Import';
+      importBtn.addEventListener('click', function () {
+        KEYS.importKey(key, function (err, res) {
+          if (err) {
+            console.error(err);
+          } else {
+            wallet.store();
+            UI.listKeys();
+          }
+        });
+      });
+      $$('actions').appendChild(importBtn);
+    }
     return template;
   }
 
@@ -397,21 +449,7 @@
       function viewKey() {
         $.importDetail.innerHTML = '';
         openpgp.key.readArmored($.key.value).keys.forEach(function (key) {
-          var detail    = getDetailTemplate(key),
-              importBtn = document.createElement('input');
-          importBtn.setAttribute('type', 'button');
-          importBtn.setAttribute('class', 'pure-button pure-button-primary');
-          importBtn.value = 'Import';
-          importBtn.addEventListener('click', function () {
-            KEYS.importKey(key, function (err, res) {
-              if (err) {
-                console.error(err);
-              } else {
-                UI.listKeys();
-              }
-            });
-          });
-          qsv(detail)('actions').appendChild(importBtn);
+          var detail    = getDetailTemplate(key, true);
           $.importDetail.appendChild(detail);
         });
       }
@@ -466,6 +504,7 @@
           if (err) {
             console.error(err);
           } else {
+            wallet.store();
             UI.listKeys();
           }
         });
@@ -674,6 +713,31 @@
         target.appendChild(getDetailTemplate(key));
         qsv(target)('actions').appendChild(removeBtn);
       });
+    },
+    toggleOpen: function (e) {
+      e.classList.toggle('closed');
+    },
+    showRemoteKey: function (node) {
+      var xhr, res, closeBtn;
+      xhr = new XMLHttpRequest();
+      xhr.open('GET', node.dataset.href, true);
+      xhr.onload = function () {
+        if (xhr.status === 200) {
+          res = getDetailTemplate(openpgp.key.readArmored(xhr.responseText).keys[0], true);
+          closeBtn = document.createElement('input');
+          closeBtn.setAttribute('type', 'button');
+          closeBtn.setAttribute('class', 'pure-button pure-button-primary');
+          closeBtn.value = 'close';
+          res.appendChild(closeBtn);
+          closeBtn.addEventListener('click', window.modal(res));
+        } else if (xhr.status === 404) {
+          res = 'NOT FOUND';
+        }
+      };
+      xhr.onerror = function () {
+        res = "Error fetching key";
+      };
+      xhr.send();
     }
     // }}}
   };
