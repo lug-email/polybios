@@ -115,6 +115,35 @@
     }
   });
 
+  function getDetailTemplate(key) {
+    console.log(key);
+    var template, $$, primary;
+    template = document.querySelector('#templates [data-template="keyDetail"]').cloneNode(true);
+    $$ = qsv(template);
+    primary = key.primaryKey;
+    $$('armor', key.armor());
+    $$('expiration', key.getExpirationTime() || 'never');
+    $$('hash', openpgp.util.get_hashAlgorithmString(key.getPreferredHashAlgorithm()));
+    $$('user', key.getPrimaryUser().user.userId.userid);
+    $$('users', key.users.map(function (user) { if (user.userId) { return user.userId.userid; } }).join(', '));
+    $$('public', key.isPublic());
+    $$('algo', primary.algorithm);
+    $$('created', primary.created.toString());
+    $$('fingerprint', primary.fingerprint.toUpperCase().replace(/(....)/g, "$1 "));
+    $$('id', primary.keyid.toHex().substr(-8).toUpperCase());
+    $$('size', primary.getBitSize());
+    if (key.isPrivate()) {
+      $$('type', 'Private');
+      $$('publicKey', key.toPublic().armor());
+      template.classList.add('private');
+    } else {
+      $$('type', 'Public');
+      template.classList.add('public');
+    }
+    template.dataset.key = primary.keyid.toHex();
+    return template;
+  }
+
   PGP = {
     // Check message signature
     verify: function (message, cb) {
@@ -350,41 +379,90 @@
     },
     // UI.Import {{{
     'import': function (node) {
-      var template, target, btnSave, btnSearch;
+      var template, target, $;
       template = document.querySelector('#templates [data-template="import"]').cloneNode(true);
+      $ = vars(template);
       target  = document.getElementById('main');
-      btnSearch = template.querySelector('[name=search]');
-      btnSearch.addEventListener('click', function (e) {
+      function onError(xhrErr) {
+        var err = "Request failed : " + xhrErr.target.status;
+        console.error(err);
+        $.key.value = 'ERROR: ' + err;
+      }
+      function viewKey() {
+        $.importDetail.innerHTML = '';
+        openpgp.key.readArmored($.key.value).keys.forEach(function (key) {
+          var detail    = getDetailTemplate(key),
+              importBtn = document.createElement('input');
+          importBtn.setAttribute('type', 'button');
+          importBtn.setAttribute('class', 'pure-button pure-button-primary');
+          importBtn.value = 'Import';
+          importBtn.addEventListener('click', function () {
+            KEYS.importKey(key, function (err, res) {
+              if (err) {
+                console.error(err);
+              } else {
+                UI.listKeys();
+              }
+            });
+          });
+          qsv(detail)('actions').appendChild(importBtn);
+          $.importDetail.appendChild(detail);
+        });
+      }
+      $.searchKeybase.addEventListener('click', function (e) {
+        var xhr;
+        xhr = new XMLHttpRequest();
+        xhr.open('GET', 'https://keybase.io/' + $.user.value + '/key.asc', true);
+        xhr.onload = function () {
+          if (xhr.status === 200) {
+            $.key.value = xhr.responseText;
+            viewKey();
+          } else if (xhr.status === 404) {
+            $.key.value = 'NOT FOUND';
+          }
+        };
+        xhr.onerror = onError;
+        xhr.send();
+      });
+      $.searchKeyserver.addEventListener('click', function (e) {
         var xhr;
         e.preventDefault();
         e.stopPropagation();
         xhr = new XMLHttpRequest();
-        xhr.open('GET', 'http://subset.pool.sks-keyservers.net/pks/lookup?op=get&search=' + template.querySelector('[name=user]').value, true);
+        xhr.open('GET', 'https://subset.pool.sks-keyservers.net/pks/lookup?op=get&search=' + $.user.value, true);
         xhr.onload = function () {
           if (xhr.status === 200) {
-            template.querySelector('[name=key]').value = xhr.responseText;
+            $.key.value = xhr.responseText;
+            viewKey();
           } else if (xhr.status === 404) {
-            template.querySelector('[name=key]').value = 'NOT FOUND';
+            $.key.value = 'NOT FOUND';
           }
         };
-        xhr.onerror = function (xhrErr) {
-          var err = "Request failed : " + xhrErr.target.status;
-          console.error(err);
-          template.querySelector('[name=key]').value = 'ERROR: ' + err;
-        };
+        xhr.onerror = onError;
         xhr.send();
       });
-      btnSave = template.querySelector('[name=save]');
-      btnSave.addEventListener('click', function (e) {
-        var imported;
-        e.preventDefault();
-        e.stopPropagation();
-        imported = template.querySelector('[name=key]').value;
-        KEYS.importKey(imported, function (err, res) {
+      $.searchWhiteout.addEventListener('click', function (e) {
+        var xhr;
+        xhr = new XMLHttpRequest();
+        xhr.open('GET', 'https://keys.whiteout.io/' + $.user.value, true);
+        xhr.onload = function () {
+          if (xhr.status === 200) {
+            $.key.value = xhr.responseText;
+            viewKey();
+          } else if (xhr.status === 404) {
+            $.key.value = 'NOT FOUND';
+          }
+        };
+        xhr.onerror = onError;
+        xhr.send();
+      });
+      $.view.addEventListener('click', viewKey);
+      $.save.addEventListener('click', function (e) {
+        KEYS.importKey($.key.value, function (err, res) {
           if (err) {
             console.error(err);
           } else {
-            console.error(res);
+            UI.listKeys();
           }
         });
       });
@@ -587,43 +665,18 @@
       target = document.getElementById('main');
       target.innerHTML = '';
       keys.forEach(function (key) {
-        var template, $$, primary, btnRemove;
-        template = document.querySelector('#templates [data-template="keyDetail"]').cloneNode(true);
-        $$ = qsv(template);
-        primary = key.primaryKey;
-        $$('armor', key.armor());
-        $$('expiration', key.getExpirationTime() || 'never');
-        //$$('IDS', key.getKeyIds());
-        //template.innerHTML += key.getKeyIds().map(function (id) {
-        //  $$(id.toHex().substr(-8).toUpperCase());
-        //  return id.toHex().substr(-8).toUpperCase();
-        //}).join(', ');
-        $$('hash', openpgp.util.get_hashAlgorithmString(key.getPreferredHashAlgorithm()));
-        $$('user', key.getPrimaryUser().user.userId.userid);
-        $$('users', key.getUserIds().join(', '));
-        $$('public', key.isPublic());
-        $$('algo', primary.algorithm);
-        $$('created', primary.created.toString());
-        $$('fingerprint', primary.fingerprint.toUpperCase().replace(/(....)/g, "$1 "));
-        $$('id', primary.keyid.toHex().substr(-8).toUpperCase());
-        $$('size', primary.getBitSize());
-        if (key.isPrivate()) {
-          $$('type', 'Private');
-          $$('publicKey', key.toPublic().armor());
-          template.classList.add('private');
-        } else {
-          $$('type', 'Public');
-          template.classList.add('public');
-        }
-        template.dataset.key = primary.keyid.toHex();
-        target.appendChild(template);
-        btnRemove = $$('remove');
-        btnRemove.addEventListener('click', function () {
-          wallet.removeKeysForId(primary.keyid.toHex());
+        var removeBtn = document.createElement('input');
+        removeBtn.setAttribute('type', 'button');
+        removeBtn.setAttribute('class', 'pure-button pure-button-primary');
+        removeBtn.value = 'Remove';
+        removeBtn.addEventListener('click', function () {
+          wallet.removeKeysForId(key.primaryKey.keyid.toHex());
           wallet.store();
           target.innerHTML = '';
           UI.listKeys();
         });
+        target.appendChild(getDetailTemplate(key));
+        qsv(target)('actions').appendChild(removeBtn);
       });
     }
     // }}}

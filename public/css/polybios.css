@@ -36,3 +36,7 @@ textarea {
 .keyDetail dd {
   margin-left: 9em;
 }
+.keyDetail pre {
+  font-family: monospace;
+  font-size: .7em;
+}
