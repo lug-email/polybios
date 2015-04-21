@@ -24,7 +24,7 @@
     "url": "https://github.com/clochix/polybios/issues"
   },
   "homepage": "https://github.com/clochix/polybios",
-  "icon-path": "lock.png",
+  "icon-path": "icon.png",
   "keywords": [
     "openpgp"
   ],
@@ -34,5 +34,5 @@
     }
   },
   "cozy-displayName": "Polybios",
-  "icon-path": "icon.png"
+  "devDependencies": {}
 }

@@ -140,6 +140,16 @@
       $$('type', 'Public');
       template.classList.add('public');
     }
+    // Image
+    key.users.forEach(function (user) {
+      var img;
+      if (user.userAttribute) {
+        console.log(user.userAttribute);
+        img = document.createElement('img');
+        img.src = 'data:image/jpeg;base64,' + btoa(user.userAttribute.write().substr(19));
+        $$('photo').appendChild(img);
+      }
+    });
     template.dataset.key = primary.keyid.toHex();
     return template;
   }
