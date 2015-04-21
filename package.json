@@ -1,6 +1,6 @@
 {
   "name": "polybios",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Just a ugly frontend for OpenPGP.js",
   "main": "server.js",
   "dependencies": {
@@ -26,6 +26,9 @@
   "homepage": "https://github.com/clochix/polybios",
   "icon-path": "icon.png",
   "keywords": [
+    "crypto",
+    "pgp",
+    "gpg",
     "openpgp"
   ],
   "cozy-permissions": {
