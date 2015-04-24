@@ -5,23 +5,6 @@
   var clear, manifest, options, wallet, PGP, KEYS, UI, store;
   clear = true;
 
-  function qsv(template) {
-    return function (name, val) {
-      var element = template.querySelector('[name="' + name + '"]');
-      if (element && typeof val !== 'undefined') {
-        element.textContent = val;
-      }
-      return element;
-    };
-  }
-  function vars(template) {
-    var res = {};
-    Array.prototype.slice.call(template.querySelectorAll('[name]')).forEach(function (elmt) {
-      res[elmt.getAttribute('name')] = elmt;
-    });
-    return res;
-  }
-
   function getEnumValues(key) {
     var e = openpgp.enums[key], res = {};
     Object.keys(e).forEach(function (a, b) {
@@ -124,35 +107,56 @@
     }
   });
 
+  function Template(templateName) {
+    var node, vars = {};
+    node = document.querySelector('#templates [data-template="' + templateName + '"]').cloneNode(true);
+    function qsv() {
+      return function (name, val) {
+        var element = node.querySelector('[name="' + name + '"]');
+        if (element && typeof val !== 'undefined') {
+          element.textContent = val;
+        }
+        return element;
+      };
+    }
+    Array.prototype.slice.call(node.querySelectorAll('[name]')).forEach(function (elmt) {
+      vars[elmt.getAttribute('name')] = elmt;
+    });
+    return {
+      node: node,
+      vars: vars,
+      qsv: qsv(node)
+    };
+  }
   function getDetailTemplate(key, showImport) {
     console.log(key);
-    var template, $$, primary, importBtn;
-    template = document.querySelector('#templates [data-template="keyDetail"]').cloneNode(true);
-    $$ = qsv(template);
+    var template, primary, importBtn;
+    template = new Template('keyDetail');
     primary = key.primaryKey;
-    $$('armor', key.armor());
-    $$('status', getEnumValues('keyStatus')[key.verifyPrimaryKey()]);
-    $$('expiration', key.getExpirationTime() || 'never');
-    $$('hash', openpgp.util.get_hashAlgorithmString(key.getPreferredHashAlgorithm()));
-    $$('user', key.getPrimaryUser().user.userId.userid);
-    $$('users', key.users.map(function (user) {
+    template.qsv('armor', key.armor());
+    template.qsv('status', getEnumValues('keyStatus')[key.verifyPrimaryKey()]);
+    template.qsv('expiration', key.getExpirationTime() || 'never');
+    template.qsv('hash', openpgp.util.get_hashAlgorithmString(key.getPreferredHashAlgorithm()));
+    template.qsv('user', key.getPrimaryUser().user.userId.userid);
+    template.qsv('users', key.users.map(function (user) {
       if (user.userId) {
+        console.log(user);
         return user.userId.userid + ' (' + getEnumValues('keyStatus')[user.verify(primary)] + ')';
       }
     }).join(', '));
-    $$('public', key.isPublic());
-    $$('algo', primary.algorithm);
-    $$('created', primary.created.toString());
-    $$('fingerprint', primary.fingerprint.toUpperCase().replace(/(....)/g, "$1 "));
-    $$('id', primary.keyid.toHex().substr(-8).toUpperCase());
-    $$('size', primary.getBitSize());
+    template.qsv('public', key.isPublic());
+    template.qsv('algo', primary.algorithm);
+    template.qsv('created', primary.created.toString());
+    template.qsv('fingerprint', primary.fingerprint.toUpperCase().replace(/(....)/g, "$1 "));
+    template.qsv('id', primary.keyid.toHex().substr(-8).toUpperCase());
+    template.qsv('size', primary.getBitSize());
     if (key.isPrivate()) {
-      $$('type', 'Private');
-      $$('publicKey', key.toPublic().armor());
+      template.qsv('type', 'Private');
+      template.qsv('publicKey', key.toPublic().armor());
       template.classList.add('private');
     } else {
-      $$('type', 'Public');
-      template.classList.add('public');
+      template.qsv('type', 'Public');
+      template.node.classList.add('public');
     }
     // Image
     key.users.forEach(function (user) {
@@ -160,18 +164,18 @@
       if (user.userAttribute) {
         img = document.createElement('img');
         img.src = 'data:image/jpeg;base64,' + btoa(user.userAttribute.write().substr(19));
-        $$('photo').appendChild(img);
+        template.qsv('photo').appendChild(img);
       }
     });
     // Signatures
     key.users.forEach(function (user) {
       if (user.userId) {
-        var res = "<li>" + user.userId.userid + ' : ';
+        var res = "<li>" + user.userId.userid.replace(/[<>]/gim, function (c) { return '&#' + c.charCodeAt(0) + ';'; }) + ' : ';
         if (Array.isArray(user.otherCertifications) && user.otherCertifications.length > 0) {
           user.otherCertifications.forEach(function (sig) {
             var issuer = sig.issuerKeyId.toHex().toUpperCase();
             //res += ' signed by <a href="http://pgp.mit.edu/pks/lookup?op=get&search=0x' + issuer + '" target="_blank">' + issuer + '</a>';
-            res += ' signed by <a data-href="https://keys.whiteout.io/publickey/key/' + issuer + '" data-action="showRemoteKey" href="javascript:">' + issuer + '</a>';
+            res += ' signed by <a data-href="https://keys.whiteout.io/publickey/key/' + issuer + '" data-action="showRemoteKey" href="javascript:">' + issuer.substr(-8) + '</a>';
             res += ' on ' + sig.created.toISOString();
             if (sig.trustLevel > 0 && sig.trustAmount > 119) {
               res += '(trusted)';
@@ -182,10 +186,10 @@
           res += 'No signature\n';
         }
         res += "</li>\n";
-        $$('sigs').innerHTML += res;
+        template.qsv('sigs').innerHTML += res;
       }
     });
-    template.dataset.key = primary.keyid.toHex();
+    template.node.dataset.key = primary.keyid.toHex();
     if (showImport) {
       importBtn = document.createElement('input');
       importBtn.setAttribute('type', 'button');
@@ -201,9 +205,9 @@
           }
         });
       });
-      $$('actions').appendChild(importBtn);
+      template.qsv('actions').appendChild(importBtn);
     }
-    return template;
+    return template.node;
   }
 
   PGP = {
@@ -393,11 +397,11 @@
     generate: function (node) {
       var template, target, privateKey, $;
       function setSizeValue() {
-        template.querySelector("[name='size-value']").textContent = template.querySelector("[name='size']").value;
+        template.node.querySelector("[name='size-value']").textContent = template.node.querySelector("[name='size']").value;
       }
-      template = document.querySelector('#templates [data-template="generate"]').cloneNode(true);
+      template = new Template('generate');
       target = document.getElementById('main');
-      $ = vars(template);
+      $ = template.vars;
       // @TODO Get account list
       //accounts = window.require('stores/account_store').getAll().toJS();
       //Object.keys(accounts).forEach(function (key) {
@@ -433,13 +437,13 @@
         });
       });
       target.innerHTML = '';
-      target.appendChild(template);
+      target.appendChild(template.node);
     },
     // UI.Import {{{
     'import': function (node) {
       var template, target, $;
-      template = document.querySelector('#templates [data-template="import"]').cloneNode(true);
-      $ = vars(template);
+      template = new Template('import');
+      $ = template.vars;
       target  = document.getElementById('main');
       function onError(xhrErr) {
         var err = "Request failed : " + xhrErr.target.status;
@@ -510,14 +514,14 @@
         });
       });
       target.innerHTML = '';
-      target.appendChild(template);
+      target.appendChild(template.node);
     },
     // }}}
     // UI Sign {{{
     sign: function (node, text, dest, cb) {
       var template, target, $;
-      template = document.querySelector('#templates [data-template="sign"]').cloneNode(true);
-      $ = vars(template);
+      template = new Template('sign');
+      $ = template.vars;
       target = document.getElementById('main');
       wallet.privateKeys.keys.forEach(function (key) {
         var option = document.createElement('option');
@@ -669,24 +673,24 @@
 
       });
       target.innerHTML = '';
-      target.appendChild(template);
+      target.appendChild(template.node);
     },
     // }}}
     // UI.listKeys {{{
     listKeys: function (node) {
-      var template, target, keys;
+      var target, keys;
       target = document.getElementById('keysList');
       target.innerHTML = '';
       keys = wallet.getAllKeys();
       keys.forEach(function (key) {
-        template = document.querySelector('#templates [data-template="keysList"]').cloneNode(true);
+        var template = new Template('keysList'),
+            primary  = key.primaryKey;
         //template.innerHTML += key.getKeyIds().map(function (id) {
         //  return id.toHex().substr(-8).toUpperCase();
         //}).join(', ');
-        var primary = key.primaryKey;
-        template.dataset.key = primary.keyid.toHex();
-        template.innerHTML += ' ' + key.users.map(function (user) { if (user.userId) { return user.userId.userid; } }).join(', ');
-        target.appendChild(template);
+        template.node.dataset.key = primary.keyid.toHex();
+        template.node.innerHTML += ' ' + key.users.map(function (user) { if (user.userId) { return user.userId.userid; } }).join(', ');
+        target.appendChild(template.node);
       });
     },
     // }}}
@@ -711,7 +715,7 @@
           UI.listKeys();
         });
         target.appendChild(getDetailTemplate(key));
-        qsv(target)('actions').appendChild(removeBtn);
+        target.querySelector('[name="actions"]').appendChild(removeBtn);
       });
     },
     toggleOpen: function (e) {
