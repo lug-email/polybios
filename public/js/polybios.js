@@ -2,8 +2,9 @@
 /*global openpgp:true */
 (function (root) {
   "use strict";
-  var clear, manifest, options, wallet, PGP, KEYS, UI, store;
+  var clear, manifest, options, wallet, PGP, KEYS, UI, store, _;
   clear = true;
+  _ = document.webL10n.get;
 
   function getEnumValues(key) {
     var e = openpgp.enums[key], res = {};
@@ -194,7 +195,7 @@
       importBtn = document.createElement('input');
       importBtn.setAttribute('type', 'button');
       importBtn.setAttribute('class', 'pure-button pure-button-primary');
-      importBtn.value = 'Import';
+      importBtn.value = _('btnImport');
       importBtn.addEventListener('click', function () {
         KEYS.importKey(key, function (err, res) {
           if (err) {
@@ -707,7 +708,7 @@
         var removeBtn = document.createElement('input');
         removeBtn.setAttribute('type', 'button');
         removeBtn.setAttribute('class', 'pure-button pure-button-primary');
-        removeBtn.value = 'Remove';
+        removeBtn.value = _('btnRemove');
         removeBtn.addEventListener('click', function () {
           wallet.removeKeysForId(key.primaryKey.keyid.toHex());
           wallet.store();

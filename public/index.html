@@ -7,22 +7,24 @@
     <link type="text/css" rel="stylesheet" href="css/pure-min.css">
     <link type="text/css" rel="stylesheet" href="css/pure-layout.css">
     <link type="text/css" rel="stylesheet" href="css/polybios.css">
+    <script defer src="js/l10n.js"></script>
     <script defer src="js/activity-client.js"></script>
     <script defer src="js/openpgp.min.js"></script>
     <script defer src="js/polybios.js"></script>
+    <link rel="prefetch" type="application/l10n" href="l10n/data.ini" />
     <title>Polybios - Manage your PGP keys</title>
   </head>
   <body>
     <div id="layout" class="content pure-g">
       <div id="nav" class="pure-u">
-        <a href="#" class="nav-menu-button">Menu</a>
+        <a href="#" class="nav-menu-button" date-l10n-id="">Menu</a>
 
         <div class="pure-menu">
           <div class="pure-menu-heading">Polybios</div>
           <div class="actions">
-            <input type="button" class="primary-button pure-button" data-action="import" value="Import" />
-            <input type="button" class="primary-button pure-button" data-action="generate" value="Generate" />
-            <input type="button" class="primary-button pure-button" data-action="sign" value="Sign" />
+            <input type="button" class="primary-button pure-button" data-action="import"  data-l10n-id="menuImport" />
+            <input type="button" class="primary-button pure-button" data-action="generate" data-l10n-id="menuGenerate" />
+            <input type="button" class="primary-button pure-button" data-action="sign" data-l10n-id="menuSign" />
           </div>
           <!--
           <ul class="pure-menu-list">
@@ -49,28 +51,28 @@
       <!-- }}} Keylist -->
       <!-- Generate {{{ -->
       <form data-template="generate" class="pure-form pure-form-aligned"> 
-        <legend>Generate key</legend>
+        <legend data-l10n-id="templateGenerateTitle" ></legend>
         <fieldset>
           <div class="pure-control-group"> 
-            <label class=" " for="size">Size</label> 
+            <label class=" " for="size" data-l10n-id="" ></label> 
             <input type="range" class="pure-input-2-3" name="size" min="1024" max="4096" step="1024" value="2048" /> 
             <span class="" name="size-value"></span> 
           </div> 
           <div class="pure-control-group"> 
-            <label class=" " for="user">User name</label> 
+            <label class=" " for="user" data-l10n-id="templateGenerateName" ></label> 
             <input type="text" class="pure-input-2-3" name="username" /> 
           </div> 
           <div class="pure-control-group"> 
-            <label class=" " for="user">User address</label> 
+            <label class=" " for="user" data-l10n-id="templateGenerateAddress" ></label> 
             <input type="text" class="pure-input-2-3" name="address" /> 
           </div> 
           <div class="pure-control-group"> 
-            <label class=" " for="passphrase">Passphrase</label> 
+            <label class=" " for="passphrase" data-l10n-id="templateGeneratePassphrase" ></label> 
             <input type="password" class="pure-input-2-3" name="passphrase" /> 
           </div> 
           <div class="pure-control-group"> 
-            <input type="button" class="pure-button" name="generate" value="Generate" />
-            <input type="button" class="pure-button" name="save" disabled value="Save" />
+            <input type="button" class="pure-button" name="generate" data-l10n-id="templateGenerateGenerate"  />
+            <input type="button" class="pure-button" name="save" disabled data-l10n-id="templateGenerateSave"  />
           </div> 
           <div class="pure-control-group"> 
             <div class=""> 
@@ -84,21 +86,21 @@
       <form data-template="import" class="pure-form pure-form-aligned">
         <fieldset>
           <div class="pure-control-group">
-            <label class="" for="user">User</label>
+            <label class="" for="user"></label>
             <input type="text" class="" name="user" />
           </div>
           <div class="pure-control-group">
-            <input type="button" class="pure-button" name="searchWhiteout" value="Search on Whiteout" />
-            <input type="button" class="pure-button" name="searchKeybase" value="Search on Keybase" />
-            <input type="button" class="pure-button" name="searchKeyserver" disabled value="Search on keyserver" />
+            <input type="button" class="pure-button" name="searchWhiteout" data-l10n-id="templateImportWhiteout"  />
+            <input type="button" class="pure-button" name="searchKeybase" data-l10n-id="templateImportKeybase"  />
+            <input type="button" class="pure-button" name="searchKeyserver" disabled data-l10n-id="templateImportKeyserver"  />
           </div>
-          <p>Paste here the key to import</p>
+          <p data-l10n-id="templateImportPaste"></p>
           <div class="pure-control-group"> 
             <textarea class="pure-input-1" name="key" rows="20"></textarea>
           </div> 
           <div class="pure-control-group"> 
-            <input type="button" class="pure-button" name="view" value="view" />
-            <input type="button" class="pure-button pure-button-primary" name="save" value="Import" />
+            <input type="button" class="pure-button" name="view" data-l10n-id="templateImportView"  />
+            <input type="button" class="pure-button pure-button-primary" name="save" data-l10n-id="templateImportImport"  />
           </div>
           <div name="importDetail">
           </div>
@@ -109,16 +111,16 @@
       <form data-template="sign" class="pure-form pure-form-aligned">
         <fieldset>
           <div class="pure-control-group">
-            <label class="" for="user">From</label>
+            <label class="" for="user" data-l10n-id="templateSignFrom"></label>
             <select name="key" />
             </select>
           </div>
           <div class="pure-control-group">
-            <label class="" for="dest">To</label>
+            <label class="" for="dest" data-l10n-id="templateSignTo"></label>
             <input type="text" class="pure-input-2-3" name="dest" />
           </div>
           <div class="pure-control-group">
-            <label class="" for="passphrase">Passphrase</label>
+            <label class="" for="passphrase" data-l10n-id="templateSignPass"></label>
             <input type="password" class="pure-input-2-3" name="passphrase" />
           </div>
           <div class="pure-control-group"> 
@@ -128,10 +130,10 @@
             <textarea class="pure-input-1" name="message" rows="20"></textarea> 
           </div> 
           <div class="pure-control-group">
-            <input type="button" class="pure-button pure-button-primary" name="sign" value="Sign" />
-            <input type="button" class="pure-button pure-button-primary" name="encrypt" value="Encrypt" />
-            <input type="button" class="pure-button pure-button-primary" name="signAndEncrypt" value="Sign and Encrypt" />
-            <input type="button" class="pure-button pure-button-primary" name="decrypt" value="Decrypt" />
+            <input type="button" class="pure-button pure-button-primary" name="sign"           data-l10n-id="templateSignSign"  />
+            <input type="button" class="pure-button pure-button-primary" name="encrypt"        data-l10n-id="templateSignEncrypt"  />
+            <input type="button" class="pure-button pure-button-primary" name="signAndEncrypt" data-l10n-id="templateSignFull"  />
+            <input type="button" class="pure-button pure-button-primary" name="decrypt"        data-l10n-id="templateSignDecrypt"  />
           </div>
         </fieldset>
       </form>;
@@ -143,31 +145,31 @@
         </div>
         <div name="photo"></div>
         <dl>
-          <dt>Users</dt>
+          <dt data-l10n-id="templateDetailUser"></dt>
           <dd name="users"></dd>
-          <dt>Type</dt>
+          <dt data-l10n-id="templateDetailType"></dt>
           <dd name="type"></dd>
-          <dt>Fingerprint</dt>
+          <dt data-l10n-id="templateDetailFinger"></dt>
           <dd name="fingerprint"></dd>
-          <dt>Status</dt>
+          <dt data-l10n-id="templateDetailStatus"></dt>
           <dd name="status"></dd>
-          <dt>Algo</dt>
+          <dt data-l10n-id="templateDetailAlgo"></dt>
           <dd name="algo"></dd>
-          <dt>Size</dt>
+          <dt data-l10n-id="templateDetailSize"></dt>
           <dd name="size"></dd>
-          <dt>Hash algorithm</dt>
+          <dt data-l10n-id="templateDetailHash"></dt>
           <dd name="hash"></dd>
-          <dt>Created</dt>
+          <dt data-l10n-id="templateDetailCreated"></dt>
           <dd name="created"></dd>
-          <dt>Expiration time</dt>
+          <dt data-l10n-id="templateDetailExpire"></dt>
           <dd name="expiration"></dd>
-          <dt>Signatures</dt>
+          <dt data-l10n-id="templateDetailSignatures"></dt>
           <dd>
             <ul name="sigs">
             </ul>
           </dd>
         </dl>
-        <h3 data-action="toggleOpen" class="closed"><a href="javascript:">Keys…</a></h3>
+        <h3 data-action="toggleOpen" class="closed"><a href="javascript:" data-l10n-id="templateDetailKeys" ></a></h3>
         <div>
           <pre name="armor"></pre>
           <pre name="publicKey"></pre>

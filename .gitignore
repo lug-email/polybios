@@ -1,2 +1,4 @@
 node_modules
 store
+public/js/l10n.js
+public/js/openpgp.js

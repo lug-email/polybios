@@ -1,18 +1,19 @@
 {
   "name": "polybios",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Just a ugly frontend for OpenPGP.js",
   "main": "server.js",
   "dependencies": {
     "body-parser": "^1.12.2",
     "connect": "^3.3.5",
     "openpgp": "^1.0.1",
-    "serve-static": "^1.9.2"
+    "serve-static": "^1.9.2",
+    "webl10n": "^1.0.0"
   },
   "scripts": {
     "dev": "cozy-dev undeploy && cozy-dev deploy 9253 && nodemon server 9253",
     "start": "node server.js",
-    "postinstall": "cp node_modules/openpgp/dist/openpgp.min.js public/js/"
+    "postinstall": "cp node_modules/openpgp/dist/openpgp.min.js public/js/; cp node_modules/webl10n/l10n.js public/js/"
   },
   "repository": {
     "type": "git",
