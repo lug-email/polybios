@@ -21,7 +21,7 @@
   app = connect();
 
   app.use(bodyParser.urlencoded({ extended: true }));
-  app.use(bodyParser.json());
+  app.use(bodyParser.text({limit: '10mb'}));
 
   // Override default app configuration
   app.use('/store', function (req, res) {
@@ -34,14 +34,14 @@
             res.end('');
           } else {
             res.statusCode = 200;
-            res.setHeader("Content-Type", "application/json; charset=utf-8");
+            res.setHeader("Content-Type", "text/plain; charset=utf-8");
             fs.createReadStream(storePath).pipe(res);
           }
         });
         break;
       case 'POST':
       case 'PUT':
-        fs.writeFile(storePath, JSON.stringify(req.body, null, 2), function (err) {
+        fs.writeFile(storePath, req.body, function (err) {
           res.setHeader("Content-Type", "application/json; charset=utf-8");
           if (err) {
             res.statusCode = 500;

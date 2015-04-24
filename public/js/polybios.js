@@ -2,7 +2,7 @@
 /*global openpgp:true */
 (function (root) {
   "use strict";
-  var clear, manifest, options, wallet, PGP, KEYS, UI, store, _;
+  var clear, manifest, options, wallet, PGP, KEYS, UI, store, mainPass, _;
   clear = true;
   _ = document.webL10n.get;
 
@@ -17,14 +17,28 @@
   function PolybiosStore(cb) {
 
     var self = this,
-        xhr;
+        xhr, symCrypt, symDecrypt;
     this.storage = {};
+
+    // Symetric encrypt and decrypt
+    symCrypt = function (pass, source) {
+      pass = btoa(openpgp.crypto.hash.md5(pass));
+      return btoa(openpgp.crypto.cfb.encrypt('', 'aes256', source, pass));
+    };
+    symDecrypt = function (pass, source) {
+      pass = btoa(openpgp.crypto.hash.md5(pass));
+      return openpgp.crypto.cfb.decrypt('aes256', pass, atob(source));
+    };
 
     xhr = new XMLHttpRequest();
     xhr.open('GET', 'store', true);
     xhr.onload = function () {
       if (xhr.status === 200) {
-        self.storage = JSON.parse(xhr.responseText);
+        try {
+          self.storage = JSON.parse(symDecrypt(mainPass, xhr.responseText));
+        } catch (e) {
+          self.storage = JSON.parse(xhr.responseText);
+        }
       } else if (xhr.status === 404) {
         self.storage = {
           public: [],
@@ -45,7 +59,7 @@
     function loadKeys(storage, type) {
       var armoredKeys = self.storage[type],
           keys = [], key, i;
-      if (armoredKeys !== null && armoredKeys.length !== 0) {
+      if (armoredKeys && armoredKeys.length !== 0) {
         for (i = 0; i < armoredKeys.length; i++) {
           key = openpgp.key.readArmored(armoredKeys[i]);
           if (!key.err) {
@@ -89,23 +103,27 @@
         console.error(err);
         window.alert('Error saving wallet');
       };
-      xhrPost.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-      xhrPost.send(JSON.stringify(self.storage));
+      xhrPost.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
+      xhrPost.send(symCrypt(mainPass, JSON.stringify(self.storage)));
     };
 
   }
 
-  store = new PolybiosStore(function (err, res) {
-    var loadEvent;
-    if (err) {
-      console.error(err);
-    } else {
-      wallet = new openpgp.Keyring(store);
-      loadEvent = new CustomEvent("walletLoaded", {"detail": {action: "loaded"}});
-      window.dispatchEvent(loadEvent);
-      UI.listKeys();
-      window.wallet = wallet;
-    }
+  window.addEventListener('localized', function () {
+    mainPass = window.prompt(_('mainPass'));
+
+    store = new PolybiosStore(function (err, res) {
+      var loadEvent;
+      if (err) {
+        console.error(err);
+      } else {
+        wallet = new openpgp.Keyring(store);
+        loadEvent = new CustomEvent("walletLoaded", {"detail": {action: "loaded"}});
+        window.dispatchEvent(loadEvent);
+        UI.listKeys();
+        window.wallet = wallet;
+      }
+    });
   });
 
   function Template(templateName) {
@@ -154,7 +172,7 @@
     if (key.isPrivate()) {
       template.qsv('type', 'Private');
       template.qsv('publicKey', key.toPublic().armor());
-      template.classList.add('private');
+      template.node.classList.add('private');
     } else {
       template.qsv('type', 'Public');
       template.node.classList.add('public');
@@ -509,7 +527,6 @@
           if (err) {
             console.error(err);
           } else {
-            wallet.store();
             UI.listKeys();
           }
         });
