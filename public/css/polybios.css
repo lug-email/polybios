@@ -46,3 +46,26 @@ textarea {
 .closed + * {
   display: none;
 }
+
+.signForm .onSign,
+.signForm .onEncrypt,
+.signForm .onFull,
+.signForm .onVerify,
+.signForm .onDecrypt {
+  display: none;
+}
+.signForm[data-type="sign"] .onSign {
+  display: inherit;
+}
+.signForm[data-type="encrypt"] .onEncrypt {
+  display: inherit;
+}
+.signForm[data-type="full"] .onFull {
+  display: inherit;
+}
+.signForm[data-type="verify"] .onVerify {
+  display: inherit;
+}
+.signForm[data-type="decrypt"] .onDecrypt {
+  display: inherit;
+}

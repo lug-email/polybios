@@ -551,6 +551,12 @@
       });
       $.message.value = text || '';
       $.dest.value    = dest || '';
+      // Select type
+      function onType() {
+        template.node.dataset.type = $.type.value;
+      }
+      $.type.addEventListener('change', onType);
+      onType();
       // Sign
       $.sign.addEventListener('click', function (e) {
         var privateKey, errors;
@@ -613,7 +619,7 @@
         }
       });
       // Sign and Encrypt
-      $.signAndEncrypt.addEventListener('click', function (e) {
+      $.full.addEventListener('click', function (e) {
         var keys = [], errors = [], privateKey;
         $.dest.value.split(',').map(function (user) {
           var key = wallet.publicKeys.getForAddress(user.trim());

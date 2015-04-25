@@ -108,18 +108,28 @@
       </form>;
       <!-- }}} Import -->
       <!-- Sign {{{ -->
-      <form data-template="sign" class="pure-form pure-form-aligned">
+      <form data-template="sign" class="pure-form pure-form-aligned signForm">
         <fieldset>
           <div class="pure-control-group">
+            <label class="" for="type" data-l10n-id="templateSignType"></label>
+            <select name="type" />
+              <option value="sign"    data-l10n-id="templateSignTypeSign"></option>
+              <option value="encrypt" data-l10n-id="templateSignTypeEncrypt"></option>
+              <option value="full"    data-l10n-id="templateSignTypeFull"></option>
+              <option value="verify"  data-l10n-id="templateSignTypeVerify"></option>
+              <option value="decrypt" data-l10n-id="templateSignTypeDecrypt"></option>
+            </select>
+          </div>
+          <div class="pure-control-group onSign onFull onDecrypt">
             <label class="" for="user" data-l10n-id="templateSignFrom"></label>
             <select name="key" />
             </select>
           </div>
-          <div class="pure-control-group">
+          <div class="pure-control-group onEncrypt onFull">
             <label class="" for="dest" data-l10n-id="templateSignTo"></label>
             <input type="text" class="pure-input-2-3" name="dest" />
           </div>
-          <div class="pure-control-group">
+          <div class="pure-control-group onSign onFull onDecrypt">
             <label class="" for="passphrase" data-l10n-id="templateSignPass"></label>
             <input type="password" class="pure-input-2-3" name="passphrase" />
           </div>
@@ -130,10 +140,11 @@
             <textarea class="pure-input-1" name="message" rows="20"></textarea> 
           </div> 
           <div class="pure-control-group">
-            <input type="button" class="pure-button pure-button-primary" name="sign"           data-l10n-id="templateSignSign"  />
-            <input type="button" class="pure-button pure-button-primary" name="encrypt"        data-l10n-id="templateSignEncrypt"  />
-            <input type="button" class="pure-button pure-button-primary" name="signAndEncrypt" data-l10n-id="templateSignFull"  />
-            <input type="button" class="pure-button pure-button-primary" name="decrypt"        data-l10n-id="templateSignDecrypt"  />
+            <input type="button" class="pure-button pure-button-primary onSign"    name="sign"    data-l10n-id="templateSignSign"  />
+            <input type="button" class="pure-button pure-button-primary onEncrypt" name="encrypt" data-l10n-id="templateSignEncrypt"  />
+            <input type="button" class="pure-button pure-button-primary onFull"    name="full"    data-l10n-id="templateSignFull"  />
+            <input type="button" class="pure-button pure-button-primary onDecrypt" name="decrypt" data-l10n-id="templateSignDecrypt"  />
+            <input type="button" class="pure-button pure-button-primary onVerify"  name="verify"  data-l10n-id="templateSignVerify"  />
           </div>
         </fieldset>
       </form>;
