@@ -150,6 +150,9 @@
   function getDetailTemplate(key, showImport) {
     console.log(key);
     var template, primary, importBtn;
+    function escapeAddress(user) {
+      return user.userId.userid.replace(/[<>]/gim, function (c) { return '&#' + c.charCodeAt(0) + ';'; });
+    }
     template = new Template('keyDetail');
     primary = key.primaryKey;
     template.qsv('armor', key.armor());
@@ -157,12 +160,13 @@
     template.qsv('expiration', key.getExpirationTime() || 'never');
     template.qsv('hash', openpgp.util.get_hashAlgorithmString(key.getPreferredHashAlgorithm()));
     template.qsv('user', key.getPrimaryUser().user.userId.userid);
-    template.qsv('users', key.users.map(function (user) {
+    template.vars.users.innerHTML = key.users.map(function (user) {
       if (user.userId) {
-        console.log(user);
-        return user.userId.userid + ' (' + getEnumValues('keyStatus')[user.verify(primary)] + ')';
+        return '<a href="javascript:" data-action="sign" data-type="encrypt" data-dest="' + user.userId.userid + '">' +
+          escapeAddress(user) + ' (' + getEnumValues('keyStatus')[user.verify(primary)] + ')' +
+          '</a>';
       }
-    }).join(', '));
+    }).join(', ');
     template.qsv('public', key.isPublic());
     template.qsv('algo', primary.algorithm);
     template.qsv('created', primary.created.toString());
@@ -189,7 +193,7 @@
     // Signatures
     key.users.forEach(function (user) {
       if (user.userId) {
-        var res = "<li>" + user.userId.userid.replace(/[<>]/gim, function (c) { return '&#' + c.charCodeAt(0) + ';'; }) + ' : ';
+        var res = "<li>" + escapeAddress(user) + ' : ';
         if (Array.isArray(user.otherCertifications) && user.otherCertifications.length > 0) {
           user.otherCertifications.forEach(function (sig) {
             var issuer = sig.issuerKeyId.toHex().toUpperCase();
@@ -398,10 +402,15 @@
       }
     },
     sign: function (message, cb) {
-      UI.sign(null, message.text, message.dest.join(','), cb);
+      var node = {
+        dataset: {
+          dest: message.dest.join(',')
+        }
+      };
+      UI.sign(node, message.text, cb);
     },
     decrypt: function (message, cb) {
-      UI.sign(null, message.text, '', cb);
+      UI.sign(null, message.text, cb);
     }
   };
 
@@ -536,10 +545,18 @@
     },
     // }}}
     // UI Sign {{{
-    sign: function (node, text, dest, cb) {
+    sign: function (node, text, cb) {
       var template, target, $;
       template = new Template('sign');
       $ = template.vars;
+      if (node) {
+        if (node.dataset.dest) {
+          $.dest.value = node.dataset.dest;
+        }
+        if (node.dataset.type) {
+          $.type.value = node.dataset.type;
+        }
+      }
       target = document.getElementById('main');
       wallet.privateKeys.keys.forEach(function (key) {
         var option = document.createElement('option');
@@ -550,7 +567,18 @@
         });
       });
       $.message.value = text || '';
-      $.dest.value    = dest || '';
+      function getDests() {
+        return $.dest.value.split(',').map(function (address) {
+          address = address.trim();
+          var res = /<([^>]*)>/.exec(address);
+          if (res === null) {
+            return address;
+          } else {
+            return res[1];
+          }
+        });
+      }
+
       // Select type
       function onType() {
         template.node.dataset.type = $.type.value;
@@ -587,9 +615,9 @@
       // Encrypt
       $.encrypt.addEventListener('click', function (e) {
         var keys = [], errors = [];
-        $.dest.value.split(',').map(function (user) {
-          var key = wallet.publicKeys.getForAddress(user.trim());
-          key = key.concat(wallet.privateKeys.getForAddress(user.trim()));
+        getDests().map(function (user) {
+          var key = wallet.publicKeys.getForAddress(user);
+          key = key.concat(wallet.privateKeys.getForAddress(user));
           if (Array.isArray(key) && key.length > 0) {
             keys = keys.concat(key);
           } else {
@@ -621,9 +649,9 @@
       // Sign and Encrypt
       $.full.addEventListener('click', function (e) {
         var keys = [], errors = [], privateKey;
-        $.dest.value.split(',').map(function (user) {
-          var key = wallet.publicKeys.getForAddress(user.trim());
-          key = key.concat(wallet.privateKeys.getForAddress(user.trim()));
+        getDests().map(function (user) {
+          var key = wallet.publicKeys.getForAddress(user);
+          key = key.concat(wallet.privateKeys.getForAddress(user));
           if (Array.isArray(key) && key.length > 0) {
             keys = keys.concat(key);
           } else {
