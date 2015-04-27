@@ -6,6 +6,7 @@
   _ = document.webL10n.get;
 
   root.UI = function (KEYS, wallet) {
+    var self = this;
     function Template(templateName) {
       var node, vars = {};
       node = document.querySelector('#templates [data-template="' + templateName + '"]').cloneNode(true);
@@ -127,6 +128,7 @@
      * @returns {null} Nothing
      */
     this.generate = function (node) {
+      document.getElementById('nav').classList.remove('active');
       var template, target, privateKey, $;
       function setSizeValue() {
         template.node.querySelector("[name='size-value']").textContent = template.node.querySelector("[name='size']").value;
@@ -146,7 +148,7 @@
         wallet.privateKeys.push(privateKey);
         alert("Key added", privateKey);
         wallet.store();
-        root.UI.listKeys();
+        self.listKeys();
         target.innerHTML = '';
       });
       $.generate.addEventListener('click', function (e) {
@@ -173,6 +175,7 @@
     };
     // UI.ImportKeys {{{
     this.importKeys = function (node) {
+      document.getElementById('nav').classList.remove('active');
       var template, target, $;
       template = new Template('import');
       $ = template.vars;
@@ -248,6 +251,7 @@
     // }}}
     // UI Sign {{{
     this.sign = function (node, text, cb) {
+      document.getElementById('nav').classList.remove('active');
       var template, target, $;
       template = new Template('sign');
       $ = template.vars;
@@ -466,7 +470,7 @@
           wallet.removeKeysForId(key.primaryKey.keyid.toHex());
           wallet.store();
           target.innerHTML = '';
-          root.UI.listKeys();
+          self.listKeys();
         });
         target.appendChild(getDetailTemplate(key));
         target.querySelector('[name="actions"]').appendChild(removeBtn);
@@ -474,6 +478,9 @@
     };
     this.toggleOpen = function (e) {
       e.classList.toggle('closed');
+    };
+    this.toggleMenu = function (node) {
+      document.getElementById('nav').classList.toggle('active');
     };
     this.showRemoteKey = function (node) {
       var xhr, res, closeBtn;

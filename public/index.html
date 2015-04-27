@@ -18,30 +18,32 @@
   <body>
     <div id="layout" class="content pure-g">
       <div id="nav" class="pure-u">
-        <a href="#" class="nav-menu-button" date-l10n-id="">Menu</a>
-
-        <div class="pure-menu">
-          <div class="pure-menu-heading">Polybios</div>
-          <div class="actions">
-            <input type="button" class="primary-button pure-button" data-action="importKeys"  data-l10n-id="menuImport" />
-            <input type="button" class="primary-button pure-button" data-action="generate" data-l10n-id="menuGenerate" />
-            <input type="button" class="primary-button pure-button" data-action="sign" data-l10n-id="menuSign" />
+        <div class="pure-menu-heading">Polybios</div>
+        <a href="#" class="nav-menu-button" data-l10n-id="menu" data-action="toggleMenu">Menu</a>
+        <div class="nav-inner">
+          <div class="pure-menu">
+            <!--
+            <div class="actions">
+              <input type="button" class="primary-button pure-button" data-action="importKeys"  data-l10n-id="menuImport" />
+              <input type="button" class="primary-button pure-button" data-action="generate" data-l10n-id="menuGenerate" />
+              <input type="button" class="primary-button pure-button" data-action="sign" data-l10n-id="menuSign" />
+            </div>
+            -->
+            <ul class="pure-menu-list">
+              <li class="pure-menu-item"><a href="javascript:" class="pure-menu-link" data-action="importKeys" data-l10n-id="menuImport"></a></li>
+              <li class="pure-menu-item"><a href="javascript:" class="pure-menu-link" data-action="generate" data-l10n-id="menuGenerate"></a></li>
+              <li class="pure-menu-item"><a href="javascript:" class="pure-menu-link" data-action="sign" data-l10n-id="menuSign"></a></li>
+            </ul>
           </div>
-          <!--
-          <ul class="pure-menu-list">
-            <li class="pure-menu-item"><a href="#" class="pure-menu-link">Public keys</a></li>
-            <li class="pure-menu-item"><a href="#" class="pure-menu-link">Private keys</a></li>
-          </ul>
-          -->
         </div>
       </div>
 
-      <div id="list" class="pure-u-1-24">
+      <div id="list" class="pure-u-1">
         <ul id="keysList">
         </ul>
       </div>
 
-      <div id="main" class="pure-u-23-24">
+      <div id="main" class="pure-u-1">
       </div>
     </div>
     <div id="templates">

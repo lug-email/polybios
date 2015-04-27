@@ -65,7 +65,7 @@ a {
 
 /* When "Menu" is clicked, the navbar should be 80% height */
 #nav.active {
-    height: 80%;
+    height: 100vh;
 }
 /* Don't show the navigation items... */
 .nav-inner {
@@ -153,7 +153,6 @@ a {
         bottom: 0;
         left: 150px;
         overflow: auto;
-        padding-left: 1em;
     }
 
 }
@@ -177,7 +176,7 @@ a {
     #main {
         position: static;
         margin: 0;
-        padding: 0 0 0 1em;
+        padding: 0;
     }
 }
 

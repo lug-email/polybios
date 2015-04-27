@@ -4,13 +4,18 @@ html {
 #templates {
   display: none;
 }
-/* Pure */
 #nav .pure-menu .actions {
   text-align: center;
+}
+#main > * {
+  padding: 1em;
 }
 textarea {
   font-family: monospace;
   font-size: .7em;
+}
+.pure-form select {
+  padding: 0 .5em;
 }
 #keysList {
   list-style-type: none;
