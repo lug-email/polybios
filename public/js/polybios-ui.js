@@ -436,18 +436,25 @@
     // }}}
     // UI.listKeys {{{
     this.listKeys = function (node) {
-      var target, keys;
+      var target, keys, tmpKeys = [];
       target = document.getElementById('keysList');
       target.innerHTML = '';
       keys = wallet.getAllKeys();
       keys.forEach(function (key) {
-        var template = new Template('keysList'),
-            primary  = key.primaryKey;
-        //template.innerHTML += key.getKeyIds().map(function (id) {
-        //  return id.toHex().substr(-8).toUpperCase();
-        //}).join(', ');
-        template.node.dataset.key = primary.keyid.toHex();
-        template.node.innerHTML += ' ' + key.users.map(function (user) { if (user.userId) { return user.userId.userid; } }).join(', ');
+        tmpKeys.push({
+          id: key.primaryKey.keyid.toHex(),
+          user: key.users[0].userId.userid
+        });
+      });
+      tmpKeys.sort(function (a, b) {
+        var u1 = a.user.toLowerCase().replace(/\W/g, ''),
+            u2 = b.user.toLowerCase().replace(/\W/g, '');
+        return u1 > u2 ? 1 : u1 > u2 ? -1 : 0;
+      });
+      tmpKeys.forEach(function (key) {
+        var template = new Template('keysList');
+        template.node.dataset.key = key.id;
+        template.node.innerHTML = key.user;
         target.appendChild(template.node);
       });
     };
