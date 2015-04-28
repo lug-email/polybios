@@ -53,7 +53,7 @@
       </li>
       <!-- }}} Keylist -->
       <!-- Generate {{{ -->
-      <form data-template="generate" class="pure-form pure-form-aligned"> 
+      <form data-template="generate" class="pure-form pure-form-aligned" onsubmit="return false;"> 
         <legend data-l10n-id="templateGenerateTitle" ></legend>
         <fieldset>
           <div class="pure-control-group"> 
@@ -86,7 +86,7 @@
       </form>;
       <!-- }}} Generate -->
       <!-- Import {{{ -->
-      <form data-template="import" class="pure-form pure-form-aligned">
+      <form data-template="import" class="pure-form pure-form-aligned" onsubmit="return false;">
         <fieldset>
           <div class="pure-control-group">
             <label class="" for="user"></label>
@@ -111,7 +111,7 @@
       </form>;
       <!-- }}} Import -->
       <!-- Sign {{{ -->
-      <form data-template="sign" class="pure-form pure-form-aligned signForm">
+      <form data-template="sign" class="pure-form pure-form-aligned signForm" onsubmit="return false;">
         <fieldset>
           <div class="pure-control-group">
             <label class="" for="type" data-l10n-id="templateSignType"></label>

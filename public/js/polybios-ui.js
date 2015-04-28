@@ -37,24 +37,33 @@
       return res;
     }
 
+    function createButton(label) {
+      var btn;
+      btn = document.createElement('input');
+      btn.setAttribute('type', 'button');
+      btn.setAttribute('class', 'pure-button pure-button-primary');
+      btn.value = label;
+      return btn;
+    }
     function getDetailTemplate(key, showImport) {
       console.log(key);
       var template, primary, importBtn;
       function escapeAddress(user) {
-        return user.userId.userid.replace(/[<>]/gim, function (c) { return '&#' + c.charCodeAt(0) + ';'; });
+        return user.userId.userid.replace(/["<>]/gim, function (c) { return '&#' + c.charCodeAt(0) + ';'; });
       }
       template = new Template('keyDetail');
       primary = key.primaryKey;
-      template.qsv('armor', key.armor());
+      template.vars.armor.innerHTML = key.armor();
       template.qsv('status', getEnumValues('keyStatus')[key.verifyPrimaryKey()]);
       template.qsv('expiration', key.getExpirationTime() || 'never');
       template.qsv('hash', openpgp.util.get_hashAlgorithmString(key.getPreferredHashAlgorithm()));
       template.qsv('user', key.getPrimaryUser().user.userId.userid);
       template.vars.users.innerHTML = key.users.map(function (user) {
         if (user.userId) {
-          return '<a href="javascript:" data-action="sign" data-type="encrypt" data-dest="' + user.userId.userid + '">' +
-            escapeAddress(user) + ' (' + getEnumValues('keyStatus')[user.verify(primary)] + ')' +
-            '</a>';
+          var escaped = escapeAddress(user),
+              link    = '<a href="javascript:" data-action="sign" data-type="encrypt" data-dest="' + escaped + '">' +
+                        escaped + ' (' + getEnumValues('keyStatus')[user.verify(primary)] + ')</a>';
+          return link;
         }
       }).join(', ');
       template.qsv('public', key.isPublic());
@@ -65,7 +74,7 @@
       template.qsv('size', primary.getBitSize());
       if (key.isPrivate()) {
         template.qsv('type', 'Private');
-        template.qsv('publicKey', key.toPublic().armor());
+        template.vars.publicKey.innerHTML = key.toPublic().armor();
         template.node.classList.add('private');
       } else {
         template.qsv('type', 'Public');
@@ -469,18 +478,28 @@
       target = document.getElementById('main');
       target.innerHTML = '';
       keys.forEach(function (key) {
-        var removeBtn = document.createElement('input');
-        removeBtn.setAttribute('type', 'button');
-        removeBtn.setAttribute('class', 'pure-button pure-button-primary');
-        removeBtn.value = _('btnRemove');
+        var actions, removeBtn, exportBtn;
+        target.appendChild(getDetailTemplate(key));
+        removeBtn = createButton(_('btnRemove'));
         removeBtn.addEventListener('click', function () {
           wallet.removeKeysForId(key.primaryKey.keyid.toHex());
           wallet.store();
           target.innerHTML = '';
           self.listKeys();
         });
-        target.appendChild(getDetailTemplate(key));
-        target.querySelector('[name="actions"]').appendChild(removeBtn);
+        exportBtn = createButton(_('btnExport'));
+        exportBtn.addEventListener('click', function () {
+          var blob, a;
+          blob = new Blob([key.armor()], {type: "text/plain"});
+          a = document.createElement('a');
+          a.download    = "key.asc";
+          a.href        = window.URL.createObjectURL(blob);
+          a.textContent = "Download backup.json";
+          a.dispatchEvent(new window.MouseEvent('click', { 'view': window, 'bubbles': true, 'cancelable': true }));
+        });
+        actions = target.querySelector('[name="actions"]');
+        actions.appendChild(removeBtn);
+        actions.appendChild(exportBtn);
       });
     };
     this.toggleOpen = function (e) {
