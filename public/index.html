@@ -30,9 +30,9 @@
             </div>
             -->
             <ul class="pure-menu-list">
-              <li class="pure-menu-item"><a href="javascript:" class="pure-menu-link" data-action="importKeys" data-l10n-id="menuImport"></a></li>
-              <li class="pure-menu-item"><a href="javascript:" class="pure-menu-link" data-action="generate" data-l10n-id="menuGenerate"></a></li>
-              <li class="pure-menu-item"><a href="javascript:" class="pure-menu-link" data-action="sign" data-l10n-id="menuSign"></a></li>
+              <li class="pure-menu-item"><a class="pure-menu-link" href="#importKeys" data-l10n-id="menuImport"></a></li>
+              <li class="pure-menu-item"><a class="pure-menu-link" href="#generate"   data-l10n-id="menuGenerate"></a></li>
+              <li class="pure-menu-item"><a class="pure-menu-link" href="#sign"       data-l10n-id="menuSign"></a></li>
             </ul>
           </div>
         </div>
@@ -48,8 +48,8 @@
     </div>
     <div id="templates">
       <!-- Keylist {{{ -->
-      <li data-template='keysList' data-action='keyDetail'>
-
+      <li data-template='keysList'>
+        <a name="listItem"></a>
       </li>
       <!-- }}} Keylist -->
       <!-- Generate {{{ -->

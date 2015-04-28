@@ -102,6 +102,20 @@
 
   }
 
+  function onHash() {
+    var hash   = window.location.hash.substr(1).split('/'),
+        params = hash.slice(1);
+    hash = hash[0];
+    if (hash === 'key' && params.length === 1) {
+      UI.keyDetail({dataset: { key: params[0] }});
+    } else {
+      if (typeof UI[hash] === 'function') {
+        UI[hash]();
+      }
+    }
+  }
+  window.addEventListener("hashchange", onHash, false);
+
   window.addEventListener('localized', function () {
     mainPass = window.prompt(_('mainPass'));
 
@@ -116,6 +130,7 @@
         UI = new root.UI(KEYS, wallet);
         UI.listKeys();
         window.wallet = wallet;
+        onHash();
       }
     });
   });

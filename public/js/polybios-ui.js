@@ -45,12 +45,14 @@
       btn.value = label;
       return btn;
     }
+
+    function escapeAddress(user) {
+      return user.userId.userid.replace(/["<>]/gim, function (c) { return '&#' + c.charCodeAt(0) + ';'; });
+    }
+
     function getDetailTemplate(key, showImport) {
       console.log(key);
       var template, primary, importBtn;
-      function escapeAddress(user) {
-        return user.userId.userid.replace(/["<>]/gim, function (c) { return '&#' + c.charCodeAt(0) + ';'; });
-      }
       template = new Template('keyDetail');
       primary = key.primaryKey;
       template.vars.armor.innerHTML = key.armor();
@@ -462,8 +464,9 @@
       });
       tmpKeys.forEach(function (key) {
         var template = new Template('keysList');
-        template.node.dataset.key = key.id;
-        template.node.innerHTML = key.user;
+        template.node.dataset.key   = key.id;
+        template.vars.listItem.href = '#key/' + key.id;
+        template.vars.listItem.textContent = key.user;
         target.appendChild(template.node);
       });
     };
