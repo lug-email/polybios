@@ -275,6 +275,14 @@
         }
       }
       target = document.getElementById('main');
+      // empty key
+      (function () {
+        var option = document.createElement('option');
+        option.setAttribute('value', '');
+        option.textContent = '';
+        $.key.appendChild(option);
+      }());
+      // Add all private keys
       wallet.privateKeys.keys.forEach(function (key) {
         var option = document.createElement('option');
         key.getUserIds().forEach(function (user) {
@@ -302,9 +310,16 @@
       }
       $.type.addEventListener('change', onType);
       onType();
+      // Cancel
+      $.cancel.addEventListener('click', function (e) {
+        target.innerHTML = '';
+        if (typeof cb === 'function') {
+          cb('User canceled', null);
+        }
+      });
       // Sign
       $.sign.addEventListener('click', function (e) {
-        var privateKey, errors;
+        var privateKey, errors = [];
         privateKey = wallet.privateKeys.getForId($.key.value);
         if (!privateKey.decrypt($.passphrase.value)) {
           errors.push("Wrong passphrase");
@@ -413,6 +428,9 @@
           keys.map(function (key) {
             return key.getPrimaryUser().user.userId.userid;
           }).join(', ');
+        if ($.key.value === '') {
+          return;
+        }
         privateKey = wallet.privateKeys.getForId($.key.value);
         if (!privateKey.decrypt($.passphrase.value)) {
           errors.push('Wrong passphrase');
@@ -454,7 +472,8 @@
       keys.forEach(function (key) {
         tmpKeys.push({
           id: key.primaryKey.keyid.toHex(),
-          user: key.users[0].userId.userid
+          user: key.users[0].userId.userid,
+          priv: key.isPrivate()
         });
       });
       tmpKeys.sort(function (a, b) {
@@ -465,6 +484,9 @@
       tmpKeys.forEach(function (key) {
         var template = new Template('keysList');
         template.node.dataset.key   = key.id;
+        if (key.priv) {
+          template.node.classList.add('private');
+        }
         template.vars.listItem.href = '#key/' + key.id;
         template.vars.listItem.textContent = key.user;
         target.appendChild(template.node);

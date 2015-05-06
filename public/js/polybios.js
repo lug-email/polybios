@@ -116,7 +116,7 @@
   }
   window.addEventListener("hashchange", onHash, false);
 
-  window.addEventListener('localized', function () {
+  function init() {
     mainPass = window.prompt(_('mainPass'));
 
     store = new PolybiosStore(function (err, res) {
@@ -125,15 +125,16 @@
         console.error(err);
       } else {
         wallet = new openpgp.Keyring(store);
+        UI = new root.UI(KEYS, wallet);
         loadEvent = new CustomEvent("walletLoaded", {"detail": {action: "loaded"}});
         window.dispatchEvent(loadEvent);
-        UI = new root.UI(KEYS, wallet);
         UI.listKeys();
         window.wallet = wallet;
         onHash();
       }
     });
-  });
+  }
+  window.addEventListener('load', init);
 
   PGP = {
     // Check message signature
@@ -308,13 +309,19 @@
     sign: function (message, cb) {
       var node = {
         dataset: {
-          dest: message.dest.join(',')
+          dest: message.dest.join(','),
+          type: 'sign'
         }
       };
       UI.sign(node, message.text, cb);
     },
     decrypt: function (message, cb) {
-      UI.sign(null, message.text, cb);
+      var node = {
+        dataset: {
+          type: 'decrypt'
+        }
+      };
+      UI.sign(node, message.text, cb);
     }
   };
 

@@ -1,44 +1,4 @@
 /*
- * -- BASE STYLES --
- * Most of these are inherited from Base, but I want to change a few.
- */
-body {
-    color: #333;
-}
-
-
-
-a {
-    text-decoration: none;
-    color: #1b98f8;
-}
-
-
-/*
- * -- HELPER STYLES --
- * Over-riding some of the .pure-button styles to make my buttons look unique
- */
-.primary-button,
-.secondary-button {
-    -webkit-box-shadow: none;
-    -moz-box-shadow: none;
-    box-shadow: none;
-    border-radius: 20px;
-}
-.primary-button {
-    color: #fff;
-    background: #1b98f8;
-    margin: 1em 0;
-}
-.secondary-button {
-    background: #fff;
-    border: 1px solid #ddd;
-    color: #666;
-    padding: 0.5em 2em;
-    font-size: 80%;
-}
-
-/*
  * -- LAYOUT STYLES --
  * This layout consists of three main elements, `#nav` (navigation bar), `#list`, and `#main`. All 3 elements are within `#layout`
  */
@@ -50,7 +10,7 @@ a {
 /* Make the navigation 100% width on phones */
 #nav {
     width: 100%;
-    height: 40px;
+    height: 2.5em;
     position: relative;
     background: rgb(37, 42, 58);
     text-align: center;
@@ -63,16 +23,15 @@ a {
     position: absolute;
 }
 
-/* When "Menu" is clicked, the navbar should be 80% height */
+/* When "Menu" is clicked, the navbar should be 100% height */
 #nav.active {
     height: 100vh;
 }
 /* Don't show the navigation items... */
+/* ...until the "Menu" button is clicked */
 .nav-inner {
     display: none;
 }
-
-/* ...until the "Menu" button is clicked */
 #nav.active .nav-inner {
     display: block;
     padding: 2em 0;
@@ -88,19 +47,15 @@ a {
     border: none;
     text-align: left;
 }
-    #nav .pure-menu-link:hover,
-    #nav .pure-menu-link:focus {
-        background: rgb(55, 60, 90);
-    }
-    #nav .pure-menu-link {
-        color: #fff;
-        margin-left: 0.5em;
-    }
-    #nav .pure-menu-heading {
-        border-bottom: none;
-        font-size:110%;
-        color: rgb(75, 113, 151);
-    }
+#nav .pure-menu-link:hover,
+#nav .pure-menu-link:focus {
+    background: rgb(55, 60, 90);
+}
+#nav .pure-menu-heading {
+    border-bottom: none;
+    font-size:110%;
+    color: rgb(75, 113, 151);
+}
 
 /*
  * -- TABLET (AND UP) MEDIA QUERIES --
@@ -111,11 +66,11 @@ a {
 
     /* Move the layout over so we can fit the nav + list in on the left */
     #layout {
-        padding-left:500px; /* "left col (nav + list)" width */
+        padding-left: 32em; /* "left col (nav + list)" width */
         position: relative;
     }
 
-    /* These are position:fixed; elements that will be in the left 500px of the screen */
+    /* These are position:fixed; elements that will be in the left 32em of the screen */
     #nav, #list {
         position: fixed;
         top: 0;
@@ -123,8 +78,8 @@ a {
         overflow: auto;
     }
     #nav {
-        margin-left:-500px; /* "left col (nav + list)" width */
-        width:150px;
+        margin-left: -32em; /* "left col (nav + list)" width */
+        width: 9em;
         height: 100%;
     }
 
@@ -140,7 +95,7 @@ a {
     }
 
     #list {
-        margin-left: -350px;
+        margin-left: -23em;
         width: 100%;
         height: 33%;
         border-bottom: 1px solid #ddd;
@@ -151,7 +106,7 @@ a {
         top: 33%;
         right: 0;
         bottom: 0;
-        left: 150px;
+        left: 9em;
         overflow: auto;
     }
 
@@ -166,8 +121,8 @@ a {
 
     /* This will take up the entire height, and be a little thinner */
     #list {
-        margin-left: -350px;
-        width:350px;
+        margin-left: -23em;
+        width: 23em;
         height: 100%;
         border-right: 1px solid #ddd;
     }

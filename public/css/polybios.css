@@ -1,11 +1,19 @@
 html {
-  background-color: white;
+  background-color: #F8F8F8;
+  color: #333;
+}
+a {
+  color: #333;
+  text-decoration: none;
 }
 #templates {
   display: none;
 }
 #nav .pure-menu .actions {
   text-align: center;
+}
+#nav .pure-menu-link {
+    color: #fff;
 }
 #main > * {
   padding: 1em;
@@ -27,12 +35,18 @@ textarea {
   border-bottom: 1px solid #ddd;
   cursor: pointer;
 }
+#keysList li.private {
+  font-weight: bold;
+}
 #keysList li a {
-  color: #333;
   display: block;
 }
 #keysList li:nth-of-type(2n+1) {
-  background-color: #EEE;
+  background-color: #DDD;
+}
+#keysList li:hover {
+  color: #111;
+  background-color: #FCB;
 }
 .keyDetail .actions input {
   margin-right: 1em;
@@ -69,15 +83,30 @@ textarea {
 .signForm[data-type="sign"] .onSign {
   display: inherit;
 }
+.signForm[data-type="sign"] input.onSign {
+  display: inline-block;
+}
 .signForm[data-type="encrypt"] .onEncrypt {
   display: inherit;
+}
+.signForm[data-type="encrypt"] input.onEncrypt {
+  display: inline-block;
 }
 .signForm[data-type="full"] .onFull {
   display: inherit;
 }
+.signForm[data-type="full"] input.onFull {
+  display: inline-block;
+}
 .signForm[data-type="verify"] .onVerify {
   display: inherit;
 }
+.signForm[data-type="verify"] input.onVerify {
+  display: inline-block;
+}
 .signForm[data-type="decrypt"] .onDecrypt {
   display: inherit;
+}
+.signForm[data-type="decrypt"] input.onDecrypt {
+  display: inline-block;
 }

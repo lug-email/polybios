@@ -232,7 +232,7 @@ function Acthesis(opt, manifest) {
             iframe = document.createElement('iframe');
             iframe.addEventListener('targetLoaded', doSend);
             iframe.src = options.handler;
-            iframe.setAttribute("style", "position: fixed; top: 0px; left: 0px; width: 100vw; height: 100vh;");
+            iframe.setAttribute("style", "position: fixed; top: 0px; left: 0px; width: 100vw; height: 100vh; padding: 1em; background: rgba(127, 127, 127, .5)");
             document.body.appendChild(iframe);
             iframeContainer = iframe;
           } else {

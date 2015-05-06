@@ -9,6 +9,7 @@ Just a ugly frontend for OpenPGP.js
 ## Installation
 
     npm install polybios
+    mv node_modules/polybios/node_modules/* node_modules/ && rm -rf  node_modules/polybios/node_modules/ && mv node_modules/polybios/* . && rm -rf node_modules/polybios
     npm start
 
 Then point your browser to `http://127.0.0.1:9253/`.

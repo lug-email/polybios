@@ -148,6 +148,7 @@
             <input type="button" class="pure-button pure-button-primary onFull"    name="full"    data-l10n-id="templateSignFull"  />
             <input type="button" class="pure-button pure-button-primary onDecrypt" name="decrypt" data-l10n-id="templateSignDecrypt"  />
             <input type="button" class="pure-button pure-button-primary onVerify"  name="verify"  data-l10n-id="templateSignVerify"  />
+            <input type="button" class="pure-button pure-button-primary"           name="cancel"  data-l10n-id="templateSignCancel"  />
           </div>
         </fieldset>
       </form>;
@@ -177,12 +178,10 @@
           <dd name="created"></dd>
           <dt data-l10n-id="templateDetailExpire"></dt>
           <dd name="expiration"></dd>
-          <dt data-l10n-id="templateDetailSignatures"></dt>
-          <dd>
-            <ul name="sigs">
-            </ul>
-          </dd>
         </dl>
+        <h3 data-l10n-id="templateDetailSignatures" data-action="toggleOpen" class="closed"></h3>
+        <ul name="sigs">
+        </ul>
         <h3 data-action="toggleOpen" class="closed"><a href="javascript:" data-l10n-id="templateDetailKeys" ></a></h3>
         <div>
           <pre name="armor"></pre>
