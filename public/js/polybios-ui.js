@@ -5,7 +5,7 @@
   var _;
   _ = document.webL10n.get;
 
-  root.UI = function (KEYS, wallet) {
+  root.UI = function (KEYS, PGP, wallet) {
     var self = this;
     function Template(templateName) {
       var node, vars = {};
@@ -461,11 +461,43 @@
         }
 
       });
+      // Verify
+      $.verify.addEventListener('click', function (e) {
+        var message;
+        message = {
+          text: $.message.value
+        };
+        PGP.verify(message, function (err, res) {
+          if (err) {
+            $.info.textContent = "Unable to check signature";
+          } else {
+            $.info.innerHTML = "<p>" + res.message + "</p>\n";
+            if (res.data) {
+              $.info.innerHTML += "<p><em>Data</em></p>\n<p>" + res.data + "</p>\n";
+            }
+            if (res.text) {
+              $.info.innerHTML += "<p><em>Text</em></p>\n<p>" + res.text + "</p>\n";
+            }
+          }
+          console.log(err, res);
+        });
+      });
       target.innerHTML = '';
       target.appendChild(template.node);
       self.toggleDetail(true);
     };
     // }}}
+    this.verify = function (node, text, cb) {
+      if (typeof node === 'undefined') {
+        node = {
+          dataset: {}
+        };
+      }
+      if (typeof node.dataset.type === 'undefined') {
+        node.dataset.type = 'verify';
+      }
+      this.sign(node, text, cb);
+    };
     // UI.listKeys {{{
     this.listKeys = function (node) {
       var target, keys, tmpKeys = [];

@@ -176,9 +176,6 @@ function Acthesis(opt, manifest) {
       if (iframeContainer) {
         iframeContainer.style.display = 'none';
       }
-      //if (targetWindow) {
-      //  targetWindow.close();
-      //}
       try {
         if (typeof response === 'string') {
           result = JSON.parse(response);
@@ -224,7 +221,7 @@ function Acthesis(opt, manifest) {
         if (typeof result[num] !== 'undefined') {
           options.handler = result[num].href;
           doSend = function () {
-            console.log("postMessage", options);
+            //console.log("postMessage", options);
             targetWindow.postMessage(options, options.handler);
           };
           iframe = document.querySelector("iframe[src='" + options.handler + "']");
@@ -235,18 +232,18 @@ function Acthesis(opt, manifest) {
             iframe.setAttribute("style", "position: fixed; top: 0px; left: 0px; width: 100vw; height: 100vh; padding: 1em; background: rgba(127, 127, 127, .5)");
             document.body.appendChild(iframe);
             iframeContainer = iframe;
+            targetWindow = iframe.contentWindow;
           } else {
             iframeContainer = iframe;
+            targetWindow = iframe.contentWindow;
+            doSend();
           }
           if (result[num].disposition === 'inline') {
             iframeContainer.style.display = 'block';
           } else {
             iframeContainer.style.display = 'none';
           }
-          targetWindow = iframe.contentWindow;
-          if (typeof targetWindow !== 'undefined' && targetWindow !== null) {
-            doSend();
-          } else {
+          if (typeof targetWindow === 'undefined' || targetWindow === null) {
             console.error("Unable to open target application");
             self.onerror.call(self);
           }
@@ -317,10 +314,10 @@ function Acthesis(opt, manifest) {
       var loadEvent, target;
       //console.log("Message Received:", message.data);
       if (message.data.action === "loaded") {
-        target = document.querySelector("iframe[src='" + message.data.url + "']");
+        target = document.querySelector("iframe[src='" + message.data.url.split('#')[0] + "']");
         if (target) {
           loadEvent = new CustomEvent("targetLoaded", {"detail": {action: "loaded"}});
-          iframe.dispatchEvent(loadEvent);
+          target.dispatchEvent(loadEvent);
         }
       } else {
         onResponse(message.data);
@@ -400,11 +397,14 @@ function Acthesis(opt, manifest) {
         get(_options.server + '/push/register', function (err, xhr) {
           if (err) {
             console.error(err);
+            req.error = {name: err};
+            req.onerror.call(req);
+          } else {
+            var endpoint = JSON.parse(xhr.responseText).endpoint;
+            endpoints.push(new PushRegistration(endpoint));
+            req.result = endpoint;
+            req.onsuccess();
           }
-          var endpoint = JSON.parse(xhr.responseText).endpoint;
-          endpoints.push(new PushRegistration(endpoint));
-          req.result = endpoint;
-          req.onsuccess();
         });
         return req;
       },
@@ -449,10 +449,13 @@ function Acthesis(opt, manifest) {
         get(_options.server + '/alarm', function (err, xhr) {
           if (err) {
             console.error(err);
+            req.error = {name: err};
+            req.onerror.call(req);
+          } else {
+            var alarms = JSON.parse(xhr.responseText);
+            req.result = alarms.data;
+            req.onsuccess();
           }
-          var alarms = JSON.parse(xhr.responseText);
-          req.result = alarms.data;
-          req.onsuccess();
         });
         return req;
       }
@@ -526,6 +529,15 @@ function Acthesis(opt, manifest) {
       handlers[activity.type](arh);
     }
   }
+  function onServerMessage(message) {
+    clientMessage = message;
+    //console.log('[provider]', message);
+    //reply('ack');
+    // If type is undefined, it's an answer
+    if (typeof message.data.type !== 'undefined') {
+      handleActivity(message.data);
+    }
+  }
   if (Object.keys(registered).length > 0) {
     if (_options.postMethod === 'message') {
       reply = function (response) {
@@ -535,19 +547,15 @@ function Acthesis(opt, manifest) {
           clientMessage.source.postMessage(response, clientMessage.origin);
         }
       };
-      // Activity provider
-      window.addEventListener("message", function (message) {
-        //console.log('Got message', message);
-        clientMessage = message;
-        //console.log('[provider]', message);
-        //reply('ack');
-        // If type is undefined, it's an answer
-        if (typeof message.data.type !== 'undefined') {
-          handleActivity(message.data);
-        }
-      }, false);
-      if (parent/* && parent.frames && parent.frames && parent.frames.content*/) {
-        parent./*frames.content.*/postMessage({ action: "loaded", url: window.location.toString()}, '*');
+      window.addEventListener("message", onServerMessage, false);
+      // Notify parent frame that we are loaded
+      if (parent && parent.frames && parent.frames[0] && parent.frames[0].content &&
+          typeof parent.frames[0].content.postMessage === 'function') {
+        parent.frames[0].content.postMessage({ action: "loaded", url: window.location.toString()}, '*');
+      } else if (parent && typeof parent.postMessage === 'function') {
+        parent.postMessage({ action: "loaded", url: window.location.toString()}, '*');
+      } else {
+        console.error("Enable to send loaded event to parent frame");
       }
     } else {
       window.WebSocket = window.WebSocket || window.mozWebSocket || window.webkitWebSocket;
@@ -594,14 +602,18 @@ function Acthesis(opt, manifest) {
             activities.forEach(handleActivity);
             break;
           case 'alarm':
-            handlers.alarm(message.data);
-            // Delete pending alarms
-            message.data.forEach(function (alarm) {
-              var xhr = new XMLHttpRequest();
-              xhr.open('DELETE', _options.server + '/activity/pending/' + alarm.id, false);
-              xhr.setRequestHeader("X-Requester", selfUrl);
-              xhr.send(null);
-            });
+            if (handlers.alarm) {
+              message.data.forEach(function (alarm) {
+                handlers.alarm(alarm);
+                // Delete pending alarms
+                var xhr = new XMLHttpRequest();
+                xhr.open('DELETE', _options.server + '/activity/pending/' + alarm.id, false);
+                xhr.setRequestHeader("X-Requester", selfUrl);
+                xhr.send(null);
+              });
+            } else {
+              console.log('Alarm received but no handler defined');
+            }
             break;
           case 'push':
             handlers.push(message.data);

@@ -125,7 +125,7 @@
         console.error(err);
       } else {
         wallet = new openpgp.Keyring(store);
-        UI = new root.UI(KEYS, wallet);
+        UI = new root.UI(KEYS, PGP, wallet);
         loadEvent = new CustomEvent("walletLoaded", {"detail": {action: "loaded"}});
         window.dispatchEvent(loadEvent);
         UI.listKeys();
@@ -136,6 +136,23 @@
   }
   window.addEventListener('load', init);
 
+  // Fetch a key on keyserver
+  function fetchKey(keyID, cb) {
+    var req = new XMLHttpRequest();
+    //req.open('GET', 'http://www.corsproxy.com/pgp.mit.edu/pks/lookup?op=get&search=0x' + keyID, true);
+    req.open('GET', 'https://keys.whiteout.io/publickey/key/' + keyID, true);
+    req.onreadystatechange = function () {
+      if (req.readyState === 4) {
+        if (req.status === 200) {
+          cb(null, req.responseText);
+        } else {
+          cb(null, {message: 'Key not found', level: 'warning'});
+        }
+      }
+    };
+    req.send(null);
+  }
+
   PGP = {
     // Check message signature
     verify: function (message, cb) {
@@ -145,7 +162,6 @@
           var pubKeys1 = {}, pubKeys2 = [];
           function format(pubkey) {
             var users = [];
-            //debugger;
             pubkey.users.forEach(function (u) {
               if (typeof u.userId !== 'undefined' && u.userId !== null) {
                 users.push(u.userId.userid);
@@ -157,21 +173,34 @@
             });
             pubKeys2.push(pubkey);
           }
-          if (typeof key === 'string') {
-            openpgp.key.readArmored(key).keys.forEach(format);
-          } else {
-            format(key);
-          }
-          msg1.verify(pubKeys2).forEach(function (verify) {
-            var pubkeyId = verify.keyid.toHex(),
-                name     = pubkeyId.substr(-8).toUpperCase() + " " + pubKeys1[pubkeyId].userNames,
-                armored  = (typeof key === 'string' ? key : key.armor());
-            if (verify.valid === true) {
-              cb(null, {message: 'Good signature by key ' + name, level: 'success', key: armored});
+          try {
+            if (typeof key === 'string') {
+              openpgp.key.readArmored(key).keys.forEach(format);
             } else {
-              cb(null, {message: 'Wrong signature by key ' + name, level: 'danger'});
+              format(key);
             }
-          });
+            msg1.verify(pubKeys2).forEach(function (verify) {
+              var pubkeyId = verify.keyid.toHex(),
+                  name     = pubkeyId.substr(-8).toUpperCase() + " " + pubKeys1[pubkeyId].userNames,
+                  armored  = (typeof key === 'string' ? key : key.armor()),
+                  signed;
+              if (verify.valid === true) {
+                signed = {
+                  message: 'Good signature by key ' + name,
+                  level: 'success',
+                  key: armored,
+                  data: msg.getLiteralData(),
+                  text: msg.getText()
+                };
+                cb(null, signed);
+              } else {
+                cb(null, {message: 'Wrong signature by key ' + name, level: 'danger'});
+              }
+            });
+          } catch (e) {
+            cb(null, {message: 'Unable to check message signature', level: 'warning'});
+            console.error(e);
+          }
         }
         var keys;
         try {
@@ -180,30 +209,19 @@
             cb(null, {message: 'No key found', level: 'warning'});
           } else {
             keys.forEach(function (keyID) {
-              var key = null, req;
+              var key = null;
               keyID = keyID.toHex();
               if (wallet) {
                 key = wallet.publicKeys.getForId(keyID);
               }
               if (key === null) {
-                req = new XMLHttpRequest();
-                //req.open('GET', 'http://www.corsproxy.com/pgp.mit.edu/pks/lookup?op=get&search=0x' + keyID, true);
-                req.open('GET', 'https://keys.whiteout.io/publickey/key/' + keyID, true);
-                req.onreadystatechange = function () {
-                  if (req.readyState === 4) {
-                    if (req.status === 200) {
-                      try {
-                        doCheck(msg, req.responseText);
-                      } catch (e) {
-                        cb(null, {message: 'Unable to check message signature', level: 'warning'});
-                        console.error(e);
-                      }
-                    } else {
-                      cb(null, {message: 'Key not found', level: 'warning'});
-                    }
+                fetchKey(keyID, function (errFetch, resFetch) {
+                  if (errFetch !== null) {
+                    cb(errFetch, resFetch);
+                  } else {
+                    doCheck(msg, resFetch);
                   }
-                };
-                req.send(null);
+                });
               } else {
                 doCheck(msg, key);
               }
@@ -214,8 +232,10 @@
           console.error(e);
         }
       }
-      if (/^-----BEGIN PGP SIGNED MESSAGE/.test(message.text)) {
+      if (/^-----BEGIN PGP SIGNED MESSAGE/gm.test(message.text)) {
         checkSignatures(openpgp.cleartext.readArmored(message.text));
+      } else if (/^-----BEGIN PGP MESSAGE/gm.test(message.text)) {
+        checkSignatures(openpgp.message.readArmored(message.text));
       } else {
         var re, headers = {}, boundary, res, parts, packetlist, literalDataPacket, input;
         message.headers['content-type'].split(/;\s+/).forEach(function (type) {
