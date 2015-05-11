@@ -183,6 +183,7 @@
       });
       target.innerHTML = '';
       target.appendChild(template.node);
+      self.toggleDetail(true);
     };
     // UI.ImportKeys {{{
     this.importKeys = function (node) {
@@ -258,6 +259,7 @@
       });
       target.innerHTML = '';
       target.appendChild(template.node);
+      self.toggleDetail(true);
     };
     // }}}
     // UI Sign {{{
@@ -461,6 +463,7 @@
       });
       target.innerHTML = '';
       target.appendChild(template.node);
+      self.toggleDetail(true);
     };
     // }}}
     // UI.listKeys {{{
@@ -526,12 +529,22 @@
         actions.appendChild(removeBtn);
         actions.appendChild(exportBtn);
       });
+      self.toggleDetail(true);
     };
     this.toggleOpen = function (e) {
       e.classList.toggle('closed');
     };
     this.toggleMenu = function (node) {
       document.getElementById('nav').classList.toggle('active');
+    };
+    this.toggleDetail = function (detail) {
+      if (detail === true) {
+        document.getElementById('list').classList.remove('active');
+        document.getElementById('main').classList.add('active');
+      } else {
+        document.getElementById('list').classList.toggle('active');
+        document.getElementById('main').classList.toggle('active');
+      }
     };
     this.showRemoteKey = function (node) {
       var xhr, res, closeBtn;

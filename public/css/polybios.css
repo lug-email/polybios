@@ -13,7 +13,7 @@ a {
   text-align: center;
 }
 #nav .pure-menu-link {
-    color: #fff;
+  color: #FFF;
 }
 #main > * {
   padding: 1em;
@@ -52,15 +52,23 @@ textarea {
   margin-right: 1em;
 }
 .keyDetail dt {
-  float: left;
-  margin: 0 1em 0 0;
-  text-align: right;
-  vertical-align: middle;
-  width: 8em;
   font-weight: bold;
 }
 .keyDetail dd {
-  margin-left: 9em;
+  margin-left: 0;
+}
+@media (min-width: 40em) {
+  .keyDetail dt {
+    float: left;
+    margin: 0 1em 0 0;
+    text-align: right;
+    vertical-align: middle;
+    width: 8em;
+    font-weight: bold;
+  }
+  .keyDetail dd {
+    margin-left: 9em;
+  }
 }
 .keyDetail pre {
   font-family: monospace;
@@ -109,4 +117,9 @@ textarea {
 }
 .signForm[data-type="decrypt"] input.onDecrypt {
   display: inline-block;
+}
+@media (max-width: 40em) {
+  #list:not(.active), #main:not(.active) {
+    display: none;
+  }
 }

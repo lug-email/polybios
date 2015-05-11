@@ -18,9 +18,6 @@
 /* Show the "Menu" button on phones */
 #nav .nav-menu-button {
     display: block;
-    top: 0.5em;
-    right: 0.5em;
-    position: absolute;
 }
 
 /* When "Menu" is clicked, the navbar should be 100% height */
