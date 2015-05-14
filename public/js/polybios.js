@@ -1,44 +1,52 @@
 //jshint browser: true, maxstatements: 35
-/*global openpgp:true */
+/*global openpgp:true, RemoteStorage: true, remoteStorage: true */
 (function (root) {
   "use strict";
-  var clear, manifest, options, wallet, PGP, KEYS, UI, store, mainPass, _, useActivities;
+  var clear, manifest, options, wallet, PGP, KEYS, UI, Utils, store, mainPass, _, useActivities;
   clear = true;
   useActivities = true;
   _ = document.webL10n.get;
 
+  Utils = {
+    // Symetric encrypt
+    symCrypt: function (pass, source) {
+      pass = btoa(openpgp.crypto.hash.md5(pass));
+      return btoa(openpgp.crypto.cfb.encrypt('', 'aes256', source, pass));
+    },
+    // Symetric decrypt
+    symDecrypt: function (pass, source) {
+      pass = btoa(openpgp.crypto.hash.md5(pass));
+      return openpgp.crypto.cfb.decrypt('aes256', pass, atob(source));
+    }
+  };
+
   function PolybiosStore(cb) {
 
     var self = this,
-        xhr, symCrypt, symDecrypt;
+        xhr;
     this.storage = {};
 
-    // Symetric encrypt and decrypt
-    symCrypt = function (pass, source) {
-      pass = btoa(openpgp.crypto.hash.md5(pass));
-      return btoa(openpgp.crypto.cfb.encrypt('', 'aes256', source, pass));
-    };
-    symDecrypt = function (pass, source) {
-      pass = btoa(openpgp.crypto.hash.md5(pass));
-      return openpgp.crypto.cfb.decrypt('aes256', pass, atob(source));
-    };
 
     xhr = new XMLHttpRequest();
     xhr.open('GET', 'store', true);
     xhr.onload = function () {
       if (xhr.status === 200) {
         try {
-          self.storage = JSON.parse(symDecrypt(mainPass, xhr.responseText));
+          self.storage = JSON.parse(Utils.symDecrypt(mainPass, xhr.responseText));
         } catch (e) {
           self.storage = JSON.parse(xhr.responseText);
         }
+        cb();
       } else if (xhr.status === 404) {
         self.storage = {
           public: [],
           private: []
         };
+        cb(404);
+      } else {
+        cb('Error retrieving remote keyring');
       }
-      cb();
+      cb(404);
     };
     xhr.onerror = function (e) {
       var err = "Request failed : " + e.target.status;
@@ -49,7 +57,7 @@
     xhr.send();
 
 
-    function loadKeys(storage, type) {
+    function loadKeys(type) {
       var armoredKeys = self.storage[type],
           keys = [], key, i;
       if (armoredKeys && armoredKeys.length !== 0) {
@@ -64,7 +72,7 @@
       }
       return keys;
     }
-    function storeKeys(storage, type, keys) {
+    function storeKeys(type, keys) {
       var armoredKeys = [], i;
       for (i = 0; i < keys.length; i++) {
         armoredKeys.push(keys[i].armor());
@@ -73,19 +81,19 @@
     }
 
     this.loadPublic = function () {
-      return loadKeys(this.storage, 'public');
+      return loadKeys('public');
     };
 
     this.loadPrivate = function () {
-      return loadKeys(this.storage, 'private');
+      return loadKeys('private');
     };
 
     this.storePublic = function (keys) {
-      storeKeys(this.storage, 'public', keys);
+      storeKeys('public', keys);
     };
 
     this.storePrivate = function (keys) {
-      storeKeys(this.storage, 'private', keys);
+      storeKeys('private', keys);
       var xhrPost = new XMLHttpRequest();
       xhrPost.open('POST', 'store', true);
       xhrPost.onload = function () {
@@ -97,15 +105,128 @@
         window.alert('Error saving wallet');
       };
       xhrPost.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
-      xhrPost.send(symCrypt(mainPass, JSON.stringify(self.storage)));
+      xhrPost.send(Utils.symCrypt(mainPass, JSON.stringify(self.storage)));
     };
 
   }
+
+  function RSStore(cb) {
+
+    var self = this;
+    this.storage = {};
+
+    RemoteStorage.defineModule('keystore', function (privateClient, publicClient) {
+      privateClient.declareType('store', {
+        "description": "Keyring store",
+        "type": "object",
+        "properties": {
+          "keyring": {
+            "type": "string"
+          }
+        }
+      });
+
+      return {
+        exports: {
+          load: function () {
+            return privateClient.getObject('store');
+          },
+          store: function (data) {
+            return privateClient.storeObject('store', 'store', {
+              keyring: data
+            });
+          }
+        }
+      };
+    });
+
+    remoteStorage.keystore.load().then(
+      function (data) {
+        if (typeof data === 'undefined') {
+          self.storage = {
+            public: [],
+            private: []
+          };
+        } else {
+          try {
+            self.storage = JSON.parse(Utils.symDecrypt(mainPass, data.keyring));
+          } catch (e) {
+            console.error("Unable to get storage");
+            self.storage = {
+              public: [],
+              private: []
+            };
+          }
+        }
+        cb();
+      },
+      function (error) {
+        self.storage = {
+          public: [],
+          private: []
+        };
+        cb(error);
+      }
+    );
+
+    function loadKeys(type) {
+      var armoredKeys = self.storage[type],
+          keys = [], key, i;
+      if (armoredKeys && armoredKeys.length !== 0) {
+        for (i = 0; i < armoredKeys.length; i++) {
+          key = openpgp.key.readArmored(armoredKeys[i]);
+          if (!key.err) {
+            keys.push(key.keys[0]);
+          } else {
+            console.error("Error reading armored key from keyring index: " + i);
+          }
+        }
+      }
+      return keys;
+    }
+    function storeKeys(type, keys) {
+      var armoredKeys = [], i;
+      for (i = 0; i < keys.length; i++) {
+        armoredKeys.push(keys[i].armor());
+      }
+      self.storage[type] = armoredKeys;
+    }
+
+    this.loadPublic = function () {
+      return loadKeys('public');
+    };
+
+    this.loadPrivate = function () {
+      return loadKeys('private');
+    };
+
+    this.storePublic = function (keys) {
+      storeKeys('public', keys);
+    };
+
+    this.storePrivate = function (keys) {
+      storeKeys('private', keys);
+      remoteStorage.keystore.store(Utils.symCrypt(mainPass, JSON.stringify(self.storage))).then(
+        function () {
+          console.log('Keyring stored');
+        },
+        function (err) {
+          console.error(err);
+          window.alert('Error saving wallet');
+        }
+      );
+    };
+
+  }
+
 
   function onHash() {
     var hash   = window.location.hash.substr(1).split('/'),
         params = hash.slice(1);
     hash = hash[0];
+    if (typeof UI === 'undefined') {
+      return;
+    }
     if (hash === 'key' && params.length === 1) {
       UI.keyDetail({dataset: { key: params[0] }});
     } else {
@@ -119,10 +240,14 @@
   function init() {
     mainPass = window.prompt(_('mainPass'));
 
-    store = new PolybiosStore(function (err, res) {
+    function onStore(err, res) {
       var loadEvent;
       if (err) {
-        console.error(err);
+        if (err === 404) {
+          console.log('No remote keyring found');
+        } else {
+          console.error(err);
+        }
       } else {
         wallet = new openpgp.Keyring(store);
         UI = new root.UI(KEYS, PGP, wallet);
@@ -132,6 +257,15 @@
         window.wallet = wallet;
         onHash();
       }
+    }
+    // By default, use our server-side storage
+    store = new PolybiosStore(onStore);
+    // Init remoteStorage
+    remoteStorage.access.claim('keystore', 'rw');
+    remoteStorage.displayWidget();
+    remoteStorage.on('connected', function () {
+      console.log('connected');
+      store = new RSStore(onStore);
     });
   }
   window.addEventListener('load', init);
