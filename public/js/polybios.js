@@ -27,36 +27,6 @@
     this.storage = {};
 
 
-    xhr = new XMLHttpRequest();
-    xhr.open('GET', 'store', true);
-    xhr.onload = function () {
-      if (xhr.status === 200) {
-        try {
-          self.storage = JSON.parse(Utils.symDecrypt(mainPass, xhr.responseText));
-        } catch (e) {
-          self.storage = JSON.parse(xhr.responseText);
-        }
-        cb();
-      } else if (xhr.status === 404) {
-        self.storage = {
-          public: [],
-          private: []
-        };
-        cb(404);
-      } else {
-        cb('Error retrieving remote keyring');
-      }
-      cb(404);
-    };
-    xhr.onerror = function (e) {
-      var err = "Request failed : " + e.target.status;
-      console.error(err);
-      window.alert(err);
-      cb(err);
-    };
-    xhr.send();
-
-
     function loadKeys(type) {
       var armoredKeys = self.storage[type],
           keys = [], key, i;
@@ -108,66 +78,46 @@
       xhrPost.send(Utils.symCrypt(mainPass, JSON.stringify(self.storage)));
     };
 
+
+    try {
+      xhr = new XMLHttpRequest();
+      xhr.open('GET', 'store', true);
+      xhr.onload = function () {
+        if (xhr.status === 200) {
+          try {
+            self.storage = JSON.parse(Utils.symDecrypt(mainPass, xhr.responseText));
+          } catch (e) {
+            self.storage = JSON.parse(xhr.responseText);
+          }
+          cb();
+        } else if (xhr.status === 404) {
+          self.storage = {
+            public: [],
+            private: []
+          };
+          cb(404);
+        } else {
+          cb('Error retrieving remote keyring');
+        }
+      };
+      xhr.onerror = function (e) {
+        var err = "Request failed : " + e.target.status;
+        console.error(err);
+        window.alert(err);
+        cb(err);
+      };
+      xhr.send();
+    } catch (e) {
+      console.error(e);
+      cb(e);
+    }
+
   }
 
   function RSStore(cb) {
 
     var self = this;
     this.storage = {};
-
-    RemoteStorage.defineModule('keystore', function (privateClient, publicClient) {
-      privateClient.declareType('store', {
-        "description": "Keyring store",
-        "type": "object",
-        "properties": {
-          "keyring": {
-            "type": "string"
-          }
-        }
-      });
-
-      return {
-        exports: {
-          load: function () {
-            return privateClient.getObject('store');
-          },
-          store: function (data) {
-            return privateClient.storeObject('store', 'store', {
-              keyring: data
-            });
-          }
-        }
-      };
-    });
-
-    remoteStorage.keystore.load().then(
-      function (data) {
-        if (typeof data === 'undefined') {
-          self.storage = {
-            public: [],
-            private: []
-          };
-        } else {
-          try {
-            self.storage = JSON.parse(Utils.symDecrypt(mainPass, data.keyring));
-          } catch (e) {
-            console.error("Unable to get storage");
-            self.storage = {
-              public: [],
-              private: []
-            };
-          }
-        }
-        cb();
-      },
-      function (error) {
-        self.storage = {
-          public: [],
-          private: []
-        };
-        cb(error);
-      }
-    );
 
     function loadKeys(type) {
       var armoredKeys = self.storage[type],
@@ -217,6 +167,65 @@
       );
     };
 
+    try {
+      RemoteStorage.defineModule('keystore', function (privateClient, publicClient) {
+        privateClient.declareType('store', {
+          "description": "Keyring store",
+          "type": "object",
+          "properties": {
+            "keyring": {
+              "type": "string"
+            }
+          }
+        });
+
+        return {
+          exports: {
+            load: function () {
+              return privateClient.getObject('store');
+            },
+            store: function (data) {
+              return privateClient.storeObject('store', 'store', {
+                keyring: data
+              });
+            }
+          }
+        };
+      });
+
+      remoteStorage.keystore.load().then(
+        function (data) {
+          if (typeof data === 'undefined') {
+            self.storage = {
+              public: [],
+              private: []
+            };
+          } else {
+            try {
+              self.storage = JSON.parse(Utils.symDecrypt(mainPass, data.keyring));
+            } catch (e) {
+              console.error("Unable to get storage");
+              self.storage = {
+                public: [],
+                private: []
+              };
+            }
+          }
+          cb();
+        },
+        function (error) {
+          self.storage = {
+            public: [],
+            private: []
+          };
+          cb(error);
+        }
+      );
+    } catch (e) {
+      console.error(e);
+      cb(e);
+    }
+
   }
 
 
@@ -248,15 +257,14 @@
         } else {
           console.error(err);
         }
-      } else {
-        wallet = new openpgp.Keyring(store);
-        UI = new root.UI(KEYS, PGP, wallet);
-        loadEvent = new CustomEvent("walletLoaded", {"detail": {action: "loaded"}});
-        window.dispatchEvent(loadEvent);
-        UI.listKeys();
-        window.wallet = wallet;
-        onHash();
       }
+      wallet = new openpgp.Keyring(store);
+      UI = new root.UI(KEYS, PGP, wallet);
+      loadEvent = new CustomEvent("walletLoaded", {"detail": {action: "loaded"}});
+      window.dispatchEvent(loadEvent);
+      UI.listKeys();
+      window.wallet = wallet;
+      onHash();
     }
     // By default, use our server-side storage
     store = new PolybiosStore(onStore);

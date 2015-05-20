@@ -122,4 +122,7 @@ textarea {
   #list:not(.active), #main:not(.active) {
     display: none;
   }
+  #remotestorage-widget {
+    top: 3em !important;
+  }
 }
