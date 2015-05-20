@@ -1,0 +1,31 @@
+{
+  "version": "0.1.5",
+  "name": "Polybios",
+  "description": "Manage your PGP keyring",
+  "launch_path": "/index.html",
+  "icons": {
+    "128": "/img/icons/icon128x128.png"
+  },
+  "developer": {
+    "name": "Clochix",
+    "url": "http://clochix.net"
+  },
+  "type": "privileged",
+  "permissions": {},
+  "installs_allowed_from": [
+    "*"
+  ],
+  "locales": {
+    "en": {
+      "name": "Polybios",
+      "description": "Manage your PGP keyring",
+      "permissions": {}
+    },
+    "fr": {
+      "name": "Polybios",
+      "description": "Gestionnaire de clés PGP",
+      "permissions": {}
+    }
+  },
+  "default_locale": "en"
+}

@@ -10,7 +10,8 @@
   },
   "scripts": {
     "dev": "cozy-dev undeploy && cozy-dev deploy 9253 && nodemon server 9253",
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "cd public && rm -f polybios.zip && zip -r polybios.zip index.html css/ js/ img/ l10n/ manifest.webapp"
   },
   "repository": {
     "type": "git",
