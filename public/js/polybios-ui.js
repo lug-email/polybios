@@ -123,6 +123,7 @@
           KEYS.importKey(key, function (err, res) {
             if (err) {
               console.error(err);
+              self.message(err, 'error');
             }
           });
         });
@@ -157,7 +158,7 @@
       setSizeValue();
       $.save.addEventListener('click', function (e) {
         wallet.privateKeys.push(privateKey);
-        alert("Key added", privateKey);
+        self.message(_('msgKeyAdded', 'info'));
         wallet.store();
         self.listKeys();
         target.innerHTML = '';
@@ -173,11 +174,11 @@
           privateKey = key;
           $.key.textContent = key.armor();
           $.save.disabled = false;
-          $.generate.textContent = 'Generate';
+          $.generate.textContent = _('templateGenerateGenerate');
           $.generate.disabled = false;
         }).catch(function (err) {
           $.key.textContent = "Error: " + err;
-          $.generate.textContent = 'Generate';
+          $.generate.textContent = _('templateGenerateGenerate');
           $.generate.disabled = false;
         });
       });
@@ -195,6 +196,7 @@
       function onError(xhrErr) {
         var err = "Request failed : " + xhrErr.target.status;
         console.error(err);
+        self.message(_('msgImportError'), 'error');
         $.key.value = 'ERROR: ' + err;
       }
       function viewKey() {
@@ -254,6 +256,7 @@
         KEYS.importKey($.key.value, function (err, res) {
           if (err) {
             console.error(err);
+            self.message(err, 'error');
           }
         });
       });
@@ -324,7 +327,7 @@
         var privateKey, errors = [];
         privateKey = wallet.privateKeys.getForId($.key.value);
         if (!privateKey.decrypt($.passphrase.value)) {
-          errors.push("Wrong passphrase");
+          errors.push(_('msgWrongPassphrase'));
         }
         if (errors.length === 0) {
           openpgp.signClearMessage(privateKey, $.message.value)
@@ -336,13 +339,14 @@
           })
           .catch(function (err) {
             console.error(err);
+            self.message(_('msgSignError') + err, 'error');
             if (typeof cb === 'function') {
               cb(err);
             }
           });
         } else {
           console.error(errors);
-          window.alert(errors.join(', '));
+          self.message(errors.join("<br>\n"), 'error');
           cb(errors.join(', '));
         }
       });
@@ -355,7 +359,7 @@
           if (Array.isArray(key) && key.length > 0) {
             keys = keys.concat(key);
           } else {
-            errors.push("No key for user " + user);
+            errors.push(_('msgNoKeyForUser') + user);
           }
         });
         if (errors.length === 0) {
@@ -368,13 +372,14 @@
           })
           .catch(function (err) {
             console.error(err);
+            self.message(_('msgEncryptError') + err, 'error');
             if (typeof cb === 'function') {
               cb(err);
             }
           });
         } else {
           console.error(errors);
-          window.alert(errors.join(', '));
+          self.message(errors.join("<br>\n"), 'error');
           if (typeof cb === 'function') {
             cb(errors.join(', '));
           }
@@ -389,12 +394,12 @@
           if (Array.isArray(key) && key.length > 0) {
             keys = keys.concat(key);
           } else {
-            errors.push("No key for user " + user);
+            errors.push(_('msgNoKeyForUser') + user);
           }
         });
         privateKey = wallet.privateKeys.getForId($.key.value);
         if (!privateKey.decrypt($.passphrase.value)) {
-          errors.push('Wrong passphrase');
+          errors.push(_('msgWrongPassphrase'));
         }
         if (errors.length === 0) {
           openpgp.signAndEncryptMessage(keys, privateKey, $.message.value)
@@ -406,13 +411,14 @@
           })
           .catch(function (err) {
             console.error(err);
+            self.message(_('msgEncryptError') + err, 'error');
             if (typeof cb === 'function') {
               cb(err);
             }
           });
         } else {
           console.error(errors);
-          window.alert(errors.join(', '));
+          self.message(errors.join("<br>\n"), 'error');
           if (typeof cb === 'function') {
             cb(errors.join(', '));
           }
@@ -426,7 +432,7 @@
         armored.getEncryptionKeyIds().forEach(function (keyid) {
           keys = keys.concat(wallet.getKeysForId(keyid.toHex(), true));
         });
-        $.info.textContent = "Message encryted for " +
+        $.info.textContent = _('msgEncryptedFor') +
           keys.map(function (key) {
             return key.getPrimaryUser().user.userId.userid;
           }).join(', ');
@@ -435,7 +441,7 @@
         }
         privateKey = wallet.privateKeys.getForId($.key.value);
         if (!privateKey.decrypt($.passphrase.value)) {
-          errors.push('Wrong passphrase');
+          errors.push(_('msgWrongPassphrase'));
         }
         if (errors.length === 0) {
           res = armored.decrypt(privateKey);
@@ -445,16 +451,15 @@
               cb(null, res.getText());
             }
           } else {
-            errors.push('Unable to decrypt message');
-            console.error(errors);
-            window.alert(errors.join(', '));
+            errors.push(_('msgDecryptError'));
+            self.message(errors.join("<br>\n"), 'error');
             if (typeof cb === 'function') {
               cb(errors.join(', '));
             }
           }
         } else {
           console.error(errors);
-          window.alert(errors.join(', '));
+          self.message(errors.join("<br>\n"), 'error');
           if (typeof cb === 'function') {
             cb(errors.join(', '));
           }
@@ -469,7 +474,7 @@
         };
         PGP.verify(message, function (err, res) {
           if (err) {
-            $.info.textContent = "Unable to check signature";
+            $.info.textContent = _('msgVerifyError');
           } else {
             $.info.innerHTML = "<p>" + res.message + "</p>\n";
             if (res.data) {
@@ -599,6 +604,25 @@
         res = "Error fetching key";
       };
       xhr.send();
+    };
+    this.message = function (text, level) {
+      var elmt, hide, to;
+      elmt = document.getElementById('message');
+      hide = function () {
+        window.clearTimeout(to);
+        elmt.classList.remove('active');
+        elmt.innerHTML = '';
+      };
+      if (typeof text === 'string') {
+        elmt.innerHTML = text;
+        elmt.dataset.level  = level || 'info';
+        elmt.classList.add('active');
+        if (level === 'info') {
+          to = window.setTimeout(hide, 5000);
+        }
+      } else {
+        hide();
+      }
     };
     // }}}
   };

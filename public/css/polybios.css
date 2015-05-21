@@ -118,11 +118,41 @@ textarea {
 .signForm[data-type="decrypt"] input.onDecrypt {
   display: inline-block;
 }
+#message {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 9em;
+  width: calc(100% - 9em);
+  letter-spacing: normal;
+  padding: .5em;
+  z-index: 1;
+  color: white;
+  font-weight: bold;
+}
+#message[data-level='info'] {
+  background: #08F;
+}
+#message[data-level='warning'] {
+  background: #F80;
+}
+#message[data-level='error'] {
+  background: #F00;
+}
+#message.active {
+  display: block;
+}
 @media (max-width: 40em) {
   #list:not(.active), #main:not(.active) {
     display: none;
   }
   #remotestorage-widget {
     top: 3em !important;
+  }
+  #message {
+    position: absolute;
+    top: 2.5em;
+    left: 0;
+    width: 100%;
   }
 }
