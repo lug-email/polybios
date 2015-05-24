@@ -5,8 +5,10 @@
   var _;
   _ = document.webL10n.get;
 
-  root.UI = function (KEYS, PGP, wallet) {
-    var self = this;
+  root.UI = function (KEYS, PGP, Utils) {
+    var self = this,
+        wallet;
+
     function Template(templateName) {
       var node, vars = {};
       node = document.querySelector('#templates [data-template="' + templateName + '"]').cloneNode(true);
@@ -131,6 +133,10 @@
       }
       return template.node;
     }
+
+    this.setWallet = function (w) {
+      wallet = w;
+    };
 
     /**
      * Generate a new private Key
@@ -568,6 +574,28 @@
       });
       self.toggleDetail(true);
     };
+    // UI Settings {{{
+    this.settings = function () {
+      document.getElementById('nav').classList.remove('active');
+      var template, target, $;
+      template = new Template('settings');
+      $ = template.vars;
+      $.save.addEventListener('click', function () {
+        var settings = Utils.settingsGet();
+        settings.storeType = $.type.value;
+        Utils.settingsSet(settings);
+        Utils.initStore();
+      });
+      $.type.addEventListener('change', function () {
+        template.node.dataset.type = this.value;
+      });
+      $.type.value = Utils.settingsGet().storeType;
+      target = document.getElementById('main');
+      target.innerHTML = '';
+      target.appendChild(template.node);
+      self.toggleDetail(true);
+    };
+    // Settings }}}
     this.toggleOpen = function (e) {
       e.classList.toggle('closed');
     };

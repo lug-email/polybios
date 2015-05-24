@@ -1,4 +1,5 @@
 //jshint browser: true, maxstatements: 35
+/*eslint no-use-before-define:0 */
 /*global openpgp:true, RemoteStorage: true, remoteStorage: true */
 (function (root) {
   "use strict";
@@ -6,6 +7,22 @@
   clear = true;
   useActivities = true;
   _ = document.webL10n.get;
+
+  function onHash() {
+    var hash   = window.location.hash.substr(1).split('/'),
+        params = hash.slice(1);
+    hash = hash[0];
+    if (typeof UI === 'undefined') {
+      return;
+    }
+    if (hash === 'key' && params.length === 1) {
+      UI.keyDetail({dataset: { key: params[0] }});
+    } else {
+      if (typeof UI[hash] === 'function') {
+        UI[hash]();
+      }
+    }
+  }
 
   Utils = {
     // Symetric encrypt
@@ -17,6 +34,67 @@
     symDecrypt: function (pass, source) {
       pass = btoa(openpgp.crypto.hash.md5(pass));
       return openpgp.crypto.cfb.decrypt('aes256', pass, atob(source));
+    },
+    settingsGet: function () {
+      var settings = decodeURIComponent(document.cookie.replace(new RegExp("(?:(?:^|.*;)\\s*settings\\s*\\=\\s*([^;]*).*$)|^.*$"), "$1"));
+      if (settings === '') {
+        settings = {
+          storeType: ''
+        };
+      } else {
+        settings = JSON.parse(settings);
+      }
+      return settings;
+    },
+    settingsSet: function (settings) {
+      document.cookie = "settings=" + encodeURIComponent(JSON.stringify(settings)) + "; max-age=31536000";
+    },
+    settingsClear: function () {
+      document.cookie = "settings=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    },
+    initStore: function () {
+      function onStore(err, res) {
+        var loadEvent;
+        if (err) {
+          if (err === 404) {
+            console.log('No remote keyring found');
+          } else {
+            console.error(err);
+          }
+        }
+        wallet = new openpgp.Keyring(store);
+        UI.setWallet(wallet);
+        loadEvent = new CustomEvent("walletLoaded", {"detail": {action: "loaded"}});
+        window.dispatchEvent(loadEvent);
+        UI.listKeys();
+        window.wallet = wallet;
+        onHash();
+      }
+      switch (Utils.settingsGet().storeType) {
+      case 'server':
+        store = new PolybiosStore(onStore);
+        break;
+      case 'rs':
+        // Init remoteStorage
+        remoteStorage.access.claim('keystore', 'rw');
+        remoteStorage.displayWidget();
+        remoteStorage.on('connected', function () {
+          console.log('connected');
+          store = new RSStore(onStore);
+        });
+        break;
+      case 'local':
+        store = new openpgp.Keyring.localstore();
+        onStore();
+        break;
+      case '':
+        UI.settings();
+        break;
+      default:
+        UI.message(_('msgUnknownStoreType'), 'error');
+        UI.settings();
+        break;
+      }
     }
   };
 
@@ -228,53 +306,14 @@
 
   }
 
-
-  function onHash() {
-    var hash   = window.location.hash.substr(1).split('/'),
-        params = hash.slice(1);
-    hash = hash[0];
-    if (typeof UI === 'undefined') {
-      return;
-    }
-    if (hash === 'key' && params.length === 1) {
-      UI.keyDetail({dataset: { key: params[0] }});
-    } else {
-      if (typeof UI[hash] === 'function') {
-        UI[hash]();
-      }
-    }
-  }
   window.addEventListener("hashchange", onHash, false);
 
   function init() {
     mainPass = window.prompt(_('mainPass'));
 
-    function onStore(err, res) {
-      var loadEvent;
-      if (err) {
-        if (err === 404) {
-          console.log('No remote keyring found');
-        } else {
-          console.error(err);
-        }
-      }
-      wallet = new openpgp.Keyring(store);
-      UI = new root.UI(KEYS, PGP, wallet);
-      loadEvent = new CustomEvent("walletLoaded", {"detail": {action: "loaded"}});
-      window.dispatchEvent(loadEvent);
-      UI.listKeys();
-      window.wallet = wallet;
-      onHash();
-    }
-    // By default, use our server-side storage
-    store = new PolybiosStore(onStore);
-    // Init remoteStorage
-    remoteStorage.access.claim('keystore', 'rw');
-    remoteStorage.displayWidget();
-    remoteStorage.on('connected', function () {
-      console.log('connected');
-      store = new RSStore(onStore);
-    });
+    UI = new root.UI(KEYS, PGP, Utils);
+
+    Utils.initStore();
   }
   window.addEventListener('load', init);
 

@@ -24,17 +24,11 @@
         <div class="pure-menu-heading">Polybios</div>
         <div class="nav-inner">
           <div class="pure-menu">
-            <!--
-            <div class="actions">
-              <input type="button" class="primary-button pure-button" data-action="importKeys"  data-l10n-id="menuImport" />
-              <input type="button" class="primary-button pure-button" data-action="generate" data-l10n-id="menuGenerate" />
-              <input type="button" class="primary-button pure-button" data-action="sign" data-l10n-id="menuSign" />
-            </div>
-            -->
             <ul class="pure-menu-list">
               <li class="pure-menu-item"><a class="pure-menu-link" href="#importKeys" data-l10n-id="menuImport"></a></li>
               <li class="pure-menu-item"><a class="pure-menu-link" href="#generate"   data-l10n-id="menuGenerate"></a></li>
               <li class="pure-menu-item"><a class="pure-menu-link" href="#sign"       data-l10n-id="menuSign"></a></li>
+              <li class="pure-menu-item"><a class="pure-menu-link" href="#settings"   data-l10n-id="menuSettings"></a></li>
             </ul>
           </div>
         </div>
@@ -93,7 +87,7 @@
       <form data-template="import" class="pure-form pure-form-aligned" onsubmit="return false;">
         <fieldset>
           <div class="pure-control-group">
-            <label class="" for="user"></label>
+            <label class="" for="user" data-l10n-id="templateImportSearch"></label>
             <input type="text" class="" name="user" />
           </div>
           <div class="pure-control-group">
@@ -153,6 +147,36 @@
             <input type="button" class="pure-button pure-button-primary onDecrypt" name="decrypt" data-l10n-id="templateSignDecrypt"  />
             <input type="button" class="pure-button pure-button-primary onVerify"  name="verify"  data-l10n-id="templateSignVerify"  />
             <input type="button" class="pure-button pure-button-primary"           name="cancel"  data-l10n-id="templateSignCancel"  />
+          </div>
+        </fieldset>
+      </form>;
+      <!-- }}} Sign -->
+      <!-- Settings {{{ -->
+      <form data-template="settings" class="pure-form pure-form-aligned signForm" onsubmit="return false;">
+        <h2 data-l10n-id="templateSettingsTitle"></h2>
+        <fieldset>
+          <!--
+          <div class="pure-control-group">
+            <label class="" for="pass" data-l10n-id="templateSettingsPass"></label>
+            <input type="password" name="pass" class="pure-input-2-3"></input>
+          </div>
+          -->
+          <div class="pure-control-group">
+            <label class="" for="type" data-l10n-id="templateSettingsStore"></label>
+            <select name="type" />
+              <option value="local"  data-l10n-id="templateSettingsStoreLocal"></option>
+              <option value="server" data-l10n-id="templateSettingsStoreServer"></option>
+              <option value="rs"     data-l10n-id="templateSettingsStoreRS"></option>
+            </select>
+          </div>
+          <!--
+          <div class="pure-control-group">
+            <label class="" for="" data-l10n-id=""></label>
+            <input type="text" name="" class="pure-input-2-3"></input>
+          </div>
+          -->
+          <div class="pure-control-group">
+            <input type="button" class="pure-button pure-button-primary" name="save"    data-l10n-id="templateSettingsSave"  />
           </div>
         </fieldset>
       </form>;
