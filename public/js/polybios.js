@@ -1,30 +1,31 @@
 //jshint browser: true, maxstatements: 35
 /*eslint no-use-before-define:0 */
-/*global openpgp:true, RemoteStorage: true, remoteStorage: true */
-(function (root) {
+/*global Polybios: true, openpgp:true, RemoteStorage: true, remoteStorage: true */
+if (typeof window.Polybios === 'undefined') {
+  window.Polybios = {};
+}
+(function () {
   "use strict";
-  var clear, manifest, options, wallet, PGP, KEYS, UI, Utils, store, mainPass, _, useActivities;
-  clear = true;
-  useActivities = true;
+  var wallet, store, mainPass = '', view, _;
   _ = document.webL10n.get;
 
   function onHash() {
     var hash   = window.location.hash.substr(1).split('/'),
         params = hash.slice(1);
     hash = hash[0];
-    if (typeof UI === 'undefined') {
+    if (typeof view === 'undefined') {
       return;
     }
     if (hash === 'key' && params.length === 1) {
-      UI.keyDetail({dataset: { key: params[0] }});
+      view.keyDetail({dataset: { key: params[0] }});
     } else {
-      if (typeof UI[hash] === 'function') {
-        UI[hash]();
+      if (typeof view[hash] === 'function') {
+        view[hash]();
       }
     }
   }
 
-  Utils = {
+  Polybios.Utils = {
     // Symetric encrypt
     symCrypt: function (pass, source) {
       pass = btoa(openpgp.crypto.hash.md5(pass));
@@ -43,6 +44,9 @@
         };
       } else {
         settings = JSON.parse(settings);
+        if (typeof settings.actServer === 'undefined') {
+          settings.actServer = '';
+        }
       }
       return settings;
     },
@@ -52,7 +56,7 @@
     settingsClear: function () {
       document.cookie = "settings=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     },
-    initStore: function () {
+    initStore: function (settings) {
       function onStore(err, res) {
         var loadEvent;
         if (err) {
@@ -63,18 +67,25 @@
           }
         }
         wallet = new openpgp.Keyring(store);
-        UI.setWallet(wallet);
+        view.setWallet(wallet);
+        Polybios.walletLoaded = true;
         loadEvent = new CustomEvent("walletLoaded", {"detail": {action: "loaded"}});
         window.dispatchEvent(loadEvent);
-        UI.listKeys();
+        view.listKeys();
         window.wallet = wallet;
         onHash();
       }
-      switch (Utils.settingsGet().storeType) {
+      switch (settings.storeType) {
       case 'server':
+        if (mainPass === '') {
+          mainPass = window.prompt(_('msgMainPass'));
+        }
         store = new PolybiosStore(onStore);
         break;
       case 'rs':
+        if (mainPass === '') {
+          mainPass = window.prompt(_('msgMainPass'));
+        }
         // Init remoteStorage
         remoteStorage.access.claim('keystore', 'rw');
         remoteStorage.displayWidget();
@@ -88,11 +99,11 @@
         onStore();
         break;
       case '':
-        UI.settings();
+        view.settings();
         break;
       default:
-        UI.message(_('msgUnknownStoreType'), 'error');
-        UI.settings();
+        view.message(_('msgUnknownStoreType'), 'error');
+        view.settings();
         break;
       }
     }
@@ -153,7 +164,7 @@
         window.alert('Error saving wallet');
       };
       xhrPost.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
-      xhrPost.send(Utils.symCrypt(mainPass, JSON.stringify(self.storage)));
+      xhrPost.send(Polybios.Utils.symCrypt(mainPass, JSON.stringify(self.storage)));
     };
 
 
@@ -163,7 +174,7 @@
       xhr.onload = function () {
         if (xhr.status === 200) {
           try {
-            self.storage = JSON.parse(Utils.symDecrypt(mainPass, xhr.responseText));
+            self.storage = JSON.parse(Polybios.Utils.symDecrypt(mainPass, xhr.responseText));
           } catch (e) {
             self.storage = JSON.parse(xhr.responseText);
           }
@@ -234,7 +245,7 @@
 
     this.storePrivate = function (keys) {
       storeKeys('private', keys);
-      remoteStorage.keystore.store(Utils.symCrypt(mainPass, JSON.stringify(self.storage))).then(
+      remoteStorage.keystore.store(Polybios.Utils.symCrypt(mainPass, JSON.stringify(self.storage))).then(
         function () {
           console.log('Keyring stored');
         },
@@ -280,7 +291,7 @@
             };
           } else {
             try {
-              self.storage = JSON.parse(Utils.symDecrypt(mainPass, data.keyring));
+              self.storage = JSON.parse(Polybios.Utils.symDecrypt(mainPass, data.keyring));
             } catch (e) {
               console.error("Unable to get storage");
               self.storage = {
@@ -309,11 +320,15 @@
   window.addEventListener("hashchange", onHash, false);
 
   function init() {
-    mainPass = window.prompt(_('mainPass'));
+    var settings;
+    settings = Polybios.Utils.settingsGet();
+    view = new Polybios.UI();
 
-    UI = new root.UI(KEYS, PGP, Utils);
+    Polybios.Utils.initStore(settings);
 
-    Utils.initStore();
+    if (settings.useAct) {
+      Polybios.Activity.init(settings);
+    }
   }
   window.addEventListener('load', init);
 
@@ -334,7 +349,7 @@
     req.send(null);
   }
 
-  PGP = {
+  Polybios.PGP = {
     // Check message signature
     verify: function (message, cb) {
       //jshint maxstatements: 25
@@ -462,10 +477,9 @@
     }
   };
 
-  KEYS = {
+  Polybios.KEYS = {
     passphrase: function (data, cb) {
       window.prompt(_('Passphrase'));
-      clear = true;
       cb(null, wallet);
     },
     importKey: function (message, cb) {
@@ -477,7 +491,7 @@
             wallet.publicKeys.push(key);
             console.log("Imported public key " + id);
             wallet.store();
-            UI.listKeys();
+            view.listKeys();
             cb(null, "Imported public key " + id);
           } else {
             console.log("Key already in wallet");
@@ -488,7 +502,7 @@
             wallet.privateKeys.push(key);
             console.log("Imported private key " + id);
             wallet.store();
-            UI.listKeys();
+            view.listKeys();
             cb(null, "Imported private key " + id);
           } else {
             console.log("Key already in wallet");
@@ -514,7 +528,7 @@
           type: 'sign'
         }
       };
-      UI.sign(node, message.text, cb);
+      view.sign(node, message.text, cb);
     },
     decrypt: function (message, cb) {
       var node = {
@@ -522,92 +536,9 @@
           type: 'decrypt'
         }
       };
-      UI.sign(node, message.text, cb);
+      view.sign(node, message.text, cb);
     }
   };
-
-
-  function pgpHandler(message) {
-    if (typeof PGP[message.source.data.type] === 'function') {
-      PGP[message.source.data.type](message.source.data.data, function (err, res) {
-        if (err) {
-          message.postError(err);
-        } else {
-          message.postResult(res);
-        }
-      });
-    } else {
-      message.postError("WRONG ACTIVITY");
-    }
-  }
-  function keysHandler(message) {
-    if (typeof KEYS[message.source.data.type] === 'function') {
-      KEYS[message.source.data.type](message.source.data.data, function (err, res) {
-        if (err) {
-          message.postError(err);
-        } else {
-          message.postResult(res);
-        }
-      });
-    } else {
-      message.postError("WRONG ACTIVITY");
-    }
-  }
-  function handler(message) {
-    console.log('HANDLER', message.source);
-    function doHandle() {
-      switch (message.source.name) {
-        case 'pgp':
-          pgpHandler(message);
-          break;
-        case 'pgpkeys':
-          keysHandler(message);
-          break;
-        default:
-          message.postError("WRONG ACTIVITY");
-          break;
-      }
-    }
-    if (!clear && message.source.name !== 'pgpkeys' && message.source.data.type !== 'passphrase') {
-      message.postError({code: 401, message: "Unauthorized", source: message});
-    } else {
-      if (wallet) {
-        doHandle();
-      } else {
-        window.addEventListener('walletLoaded', doHandle);
-      }
-    }
-  }
-  if (useActivities && typeof window.Acthesis !== 'undefined') {
-    options = {
-      postMethod: 'message'
-    };
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      options.server = 'http://localhost:9250';
-    } else {
-      options.server =  window.location.protocol + "//" + window.location.hostname + "/apps/acthesis";
-    }
-    // We define 2 activities, because we need differents dispositions: some are hidden, others should be opened in new window
-    manifest = {
-      "activities": {
-        "pgp": {
-          "disposition": 'hidden',
-          "returnValue": true
-        },
-        "pgpkeys": {
-          "disposition": 'inline',
-          "returnValue": true
-        }
-      }
-    };
-    window.Acthesis(options, manifest);
-    navigator.mozSetMessageHandler('activity', handler);
-    if (navigator.mozHasPendingMessage('activity')) {
-      console.log("[provider] PENDING activities");
-    } else {
-      console.log("[provider] No pending activities");
-    }
-  }
 
   window.addEventListener('click', function (event) {
     var node   = event.target,
@@ -616,8 +547,8 @@
       node   = node.parentNode;
       action = node.dataset.action;
     }
-    if (typeof action !== 'undefined' && typeof UI[action] === 'function') {
-      UI[action](node);
+    if (typeof action !== 'undefined' && typeof view[action] === 'function') {
+      view[action](node);
     }
   });
 

@@ -1,11 +1,14 @@
 //jshint browser: true, maxstatements: 35
-/*global openpgp:true */
-(function (root) {
+/*global openpgp:true, Polybios: true */
+if (typeof window.Polybios === 'undefined') {
+  window.Polybios = {};
+}
+(function () {
   "use strict";
   var _;
   _ = document.webL10n.get;
 
-  root.UI = function (KEYS, PGP, Utils) {
+  Polybios.UI = function () {
     var self = this,
         wallet;
 
@@ -122,7 +125,7 @@
         importBtn.setAttribute('class', 'pure-button pure-button-primary');
         importBtn.value = _('btnImport');
         importBtn.addEventListener('click', function () {
-          KEYS.importKey(key, function (err, res) {
+          Polybios.KEYS.importKey(key, function (err, res) {
             if (err) {
               console.error(err);
               self.message(err, 'error');
@@ -259,7 +262,7 @@
       });
       $.view.addEventListener('click', viewKey);
       $.save.addEventListener('click', function (e) {
-        KEYS.importKey($.key.value, function (err, res) {
+        Polybios.KEYS.importKey($.key.value, function (err, res) {
           if (err) {
             console.error(err);
             self.message(err, 'error');
@@ -478,7 +481,7 @@
         message = {
           text: $.message.value
         };
-        PGP.verify(message, function (err, res) {
+        Polybios.PGP.verify(message, function (err, res) {
           if (err) {
             $.info.textContent = _('msgVerifyError');
           } else {
@@ -577,19 +580,42 @@
     // UI Settings {{{
     this.settings = function () {
       document.getElementById('nav').classList.remove('active');
-      var template, target, $;
+      var template, target, $, settings;
       template = new Template('settings');
       $ = template.vars;
-      $.save.addEventListener('click', function () {
-        var settings = Utils.settingsGet();
-        settings.storeType = $.type.value;
-        Utils.settingsSet(settings);
-        Utils.initStore();
-      });
+      //$.save.addEventListener('click', function () {
+      //  var s = Utils.settingsGet();
+      //  s.storeType = $.type.value;
+      //  Utils.settingsSet(s);
+      //  Utils.initStore(s);
+      //  self.message(_('msgSettingsSaved'));
+      //});
       $.type.addEventListener('change', function () {
         template.node.dataset.type = this.value;
+        var s = Polybios.Utils.settingsGet();
+        s.storeType = $.type.value;
+        Polybios.Utils.settingsSet(s);
+        Polybios.Utils.initStore(s);
+        self.message(_('msgSettingsSaved'));
       });
-      $.type.value = Utils.settingsGet().storeType;
+      $.useAct.addEventListener('change', function () {
+        template.node.dataset.type = this.value;
+        var s = Polybios.Utils.settingsGet();
+        s.useAct = this.checked;
+        Polybios.Utils.settingsSet(s);
+        self.message(_('msgSettingsSaved'));
+      });
+      $.actServer.addEventListener('change', function () {
+        template.node.dataset.type = this.value;
+        var s = Polybios.Utils.settingsGet();
+        s.actServer = this.value;
+        Polybios.Utils.settingsSet(s);
+        self.message(_('msgSettingsSaved'));
+      });
+      settings = Polybios.Utils.settingsGet();
+      $.type.value      = settings.storeType;
+      $.useAct.checked  = settings.useAct;
+      $.actServer.value = settings.actServer || '';
       target = document.getElementById('main');
       target.innerHTML = '';
       target.appendChild(template.node);
@@ -635,6 +661,9 @@
     };
     this.message = function (text, level) {
       var elmt, hide, to;
+      if (typeof level === 'undefined') {
+        level = 'info';
+      }
       elmt = document.getElementById('message');
       hide = function () {
         window.clearTimeout(to);
@@ -643,10 +672,10 @@
       };
       if (typeof text === 'string') {
         elmt.innerHTML = text;
-        elmt.dataset.level  = level || 'info';
+        elmt.dataset.level  = level;
         elmt.classList.add('active');
         if (level === 'info') {
-          to = window.setTimeout(hide, 5000);
+          to = window.setTimeout(hide, 2000);
         }
       } else {
         hide();
@@ -654,4 +683,4 @@
     };
     // }}}
   };
-}(window));
+}());

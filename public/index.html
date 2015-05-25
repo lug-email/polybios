@@ -7,9 +7,10 @@
     <link type="text/css" rel="stylesheet" href="css/pure-min.css">
     <link type="text/css" rel="stylesheet" href="css/pure-layout.css">
     <link type="text/css" rel="stylesheet" href="css/polybios.css">
-    <script defer src="js/l10n.js"></script>
+    <script src="js/l10n.js"></script>
     <script defer src="js/activity-client.js"></script>
     <script defer src="js/openpgp.min.js"></script>
+    <script defer src="js/activities.js"></script>
     <script defer src="js/polybios-ui.js"></script>
     <script defer src="js/polybios.js"></script>
     <script defer src="js/remotestorage.min.js"></script>
@@ -169,16 +170,23 @@
               <option value="rs"     data-l10n-id="templateSettingsStoreRS"></option>
             </select>
           </div>
-          <!--
+        </fieldset>
+        <fieldset>
+          <legend data-l10n-id="templateSettingsAdvanced"></legend>
           <div class="pure-control-group">
-            <label class="" for="" data-l10n-id=""></label>
-            <input type="text" name="" class="pure-input-2-3"></input>
+            <label class="" for="useAct" data-l10n-id="templateSettingsUseActhesis"></label>
+            <input type="checkbox" name="useAct" class="pure-input-2-3"></input>
           </div>
-          -->
           <div class="pure-control-group">
-            <input type="button" class="pure-button pure-button-primary" name="save"    data-l10n-id="templateSettingsSave"  />
+            <label class="" for="actServer" data-l10n-id="templateSettingsActServer"></label>
+            <input type="text" name="actServer" class="pure-input-2-3"></input>
           </div>
         </fieldset>
+        <!--
+        <div class="pure-control-group">
+          <input type="button" class="pure-button pure-button-primary" name="save"    data-l10n-id="templateSettingsSave"  />
+        </div>
+        -->
       </form>;
       <!-- }}} Sign -->
       <!-- keyDetail {{{ -->
