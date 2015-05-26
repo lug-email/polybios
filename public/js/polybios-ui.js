@@ -583,20 +583,30 @@ if (typeof window.Polybios === 'undefined') {
       var template, target, $, settings;
       template = new Template('settings');
       $ = template.vars;
-      //$.save.addEventListener('click', function () {
-      //  var s = Utils.settingsGet();
-      //  s.storeType = $.type.value;
-      //  Utils.settingsSet(s);
-      //  Utils.initStore(s);
-      //  self.message(_('msgSettingsSaved'));
-      //});
-      $.type.addEventListener('change', function () {
-        template.node.dataset.type = this.value;
+      $.save.addEventListener('click', function () {
         var s = Polybios.Utils.settingsGet();
         s.storeType = $.type.value;
+        s.useAct    = $.useAct.checked;
+        s.actServer = $.actServer.value;
+        s.lang      = $.lang.value;
         Polybios.Utils.settingsSet(s);
         Polybios.Utils.initStore(s);
         self.message(_('msgSettingsSaved'));
+      });
+      $.type.addEventListener('change', function () {
+        template.node.dataset.type = this.value;
+        var s = Polybios.Utils.settingsGet();
+        s.storeType = this.value;
+        Polybios.Utils.settingsSet(s);
+        Polybios.Utils.initStore(s);
+        self.message(_('msgSettingsSaved'));
+      });
+      $.lang.addEventListener('change', function () {
+        var s = Polybios.Utils.settingsGet();
+        s.lang = this.value;
+        Polybios.Utils.settingsSet(s);
+        self.message(_('msgSettingsSaved'));
+        document.webL10n.setLanguage(this.value);
       });
       $.useAct.addEventListener('change', function () {
         template.node.dataset.type = this.value;
@@ -614,6 +624,7 @@ if (typeof window.Polybios === 'undefined') {
       });
       settings = Polybios.Utils.settingsGet();
       $.type.value      = settings.storeType;
+      $.lang.value      = settings.lang;
       $.useAct.checked  = settings.useAct;
       $.actServer.value = settings.actServer || '';
       target = document.getElementById('main');

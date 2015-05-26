@@ -44,8 +44,14 @@ if (typeof window.Polybios === 'undefined') {
         };
       } else {
         settings = JSON.parse(settings);
+        if (typeof settings.useAct === 'undefined') {
+          settings.useAct = false;
+        }
         if (typeof settings.actServer === 'undefined') {
           settings.actServer = '';
+        }
+        if (typeof settings.lang === 'undefined') {
+          settings.lang = 'en-us';
         }
       }
       return settings;
@@ -319,18 +325,26 @@ if (typeof window.Polybios === 'undefined') {
 
   window.addEventListener("hashchange", onHash, false);
 
-  function init() {
-    var settings;
-    settings = Polybios.Utils.settingsGet();
-    view = new Polybios.UI();
+  window.addEventListener('load', function () {
+    document.webL10n.ready(function () {
+      var settings;
+      function init() {
+        view = new Polybios.UI();
 
-    Polybios.Utils.initStore(settings);
+        Polybios.Utils.initStore(settings);
 
-    if (settings.useAct) {
-      Polybios.Activity.init(settings);
-    }
-  }
-  window.addEventListener('load', init);
+        if (settings.useAct) {
+          Polybios.Activity.init(settings);
+        }
+      }
+      settings = Polybios.Utils.settingsGet();
+      if (document.webL10n.getLanguage() !== settings.lang) {
+        document.webL10n.setLanguage(settings.lang, init);
+      } else {
+        init();
+      }
+    });
+  });
 
   // Fetch a key on keyserver
   function fetchKey(keyID, cb) {
