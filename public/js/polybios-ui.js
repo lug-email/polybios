@@ -574,6 +574,16 @@ if (typeof window.Polybios === 'undefined') {
         actions = target.querySelector('[name="actions"]');
         actions.appendChild(removeBtn);
         actions.appendChild(exportBtn);
+        key.users.map(function (user) {
+          var encryptBtn;
+          if (user.userId) {
+            encryptBtn = createButton(_('btnEncrypt', {user: user.userId.userid}));
+            encryptBtn.addEventListener('click', function () {
+              self.sign({dataset: {type: 'encrypt', dest: user.userId.userid}});
+            });
+            actions.appendChild(encryptBtn);
+          }
+        });
       });
       self.toggleDetail(true);
     };
