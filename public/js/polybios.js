@@ -40,7 +40,10 @@ if (typeof window.Polybios === 'undefined') {
       var settings = decodeURIComponent(document.cookie.replace(new RegExp("(?:(?:^|.*;)\\s*settings\\s*\\=\\s*([^;]*).*$)|^.*$"), "$1"));
       if (settings === '') {
         settings = {
-          storeType: ''
+          storeType: '',
+          lang: 'en-us',
+          useAct: false,
+          actServer: ''
         };
       } else {
         settings = JSON.parse(settings);
@@ -67,9 +70,9 @@ if (typeof window.Polybios === 'undefined') {
         var loadEvent;
         if (err) {
           if (err === 404) {
-            console.log('No remote keyring found');
+            view.message(_('msgStoreNoKeyring'), 'warning');
           } else {
-            console.error(err);
+            view.message(_('msgError'), 'error');
           }
         }
         wallet = new openpgp.Keyring(store);
@@ -96,7 +99,6 @@ if (typeof window.Polybios === 'undefined') {
         remoteStorage.access.claim('keystore', 'rw');
         remoteStorage.displayWidget();
         remoteStorage.on('connected', function () {
-          console.log('connected');
           store = new RSStore(onStore);
         });
         break;
@@ -131,7 +133,7 @@ if (typeof window.Polybios === 'undefined') {
           if (!key.err) {
             keys.push(key.keys[0]);
           } else {
-            console.error("Error reading armored key from keyring index: " + i);
+            view.message(_('msgLoadkeysError') + ' ' + key.err, 'error');
           }
         }
       }
@@ -162,12 +164,12 @@ if (typeof window.Polybios === 'undefined') {
       var xhrPost = new XMLHttpRequest();
       xhrPost.open('POST', 'store', true);
       xhrPost.onload = function () {
-        console.log('Keyring stored');
+        view.message(_('msgKeyringStored'));
       };
       xhrPost.onerror = function (e) {
         var err = "Request failed : " + e.target.status;
         console.error(err);
-        window.alert('Error saving wallet');
+        view.message(_('msgKeyringStoreErr') + ' ' + err, 'error');
       };
       xhrPost.setRequestHeader("Content-Type", "text/plain;charset=UTF-8");
       xhrPost.send(Polybios.Utils.symCrypt(mainPass, JSON.stringify(self.storage)));
@@ -192,19 +194,19 @@ if (typeof window.Polybios === 'undefined') {
           };
           cb(404);
         } else {
-          cb('Error retrieving remote keyring');
+          cb(_('msgKeyringLoadErr'));
         }
       };
       xhr.onerror = function (e) {
         var err = "Request failed : " + e.target.status;
         console.error(err);
-        window.alert(err);
-        cb(err);
+        view.message(_('msgKeyringLoadErr') + ' ' + err, 'error');
+        cb(_('msgKeyringLoadErr') + ' ' + err);
       };
       xhr.send();
     } catch (e) {
-      console.error(e);
-      cb(e);
+      view.message(_('msgError') + ' ' + e, 'error');
+      cb(_('msgError') + ' ' + e);
     }
 
   }
@@ -223,7 +225,7 @@ if (typeof window.Polybios === 'undefined') {
           if (!key.err) {
             keys.push(key.keys[0]);
           } else {
-            console.error("Error reading armored key from keyring index: " + i);
+            console.error(_('msgLoadkeysError') + ' ' + key.err, 'error');
           }
         }
       }
@@ -253,11 +255,11 @@ if (typeof window.Polybios === 'undefined') {
       storeKeys('private', keys);
       remoteStorage.keystore.store(Polybios.Utils.symCrypt(mainPass, JSON.stringify(self.storage))).then(
         function () {
-          console.log('Keyring stored');
+          view.message(_('msgKeyringStored'));
         },
         function (err) {
           console.error(err);
-          window.alert('Error saving wallet');
+          view.message(_('msgKeyringStoreErr') + ' ' + err, 'error');
         }
       );
     };
@@ -299,7 +301,7 @@ if (typeof window.Polybios === 'undefined') {
             try {
               self.storage = JSON.parse(Polybios.Utils.symDecrypt(mainPass, data.keyring));
             } catch (e) {
-              console.error("Unable to get storage");
+              view.message(_('msgError') + ' ' + e, 'error');
               self.storage = {
                 public: [],
                 private: []
@@ -317,8 +319,8 @@ if (typeof window.Polybios === 'undefined') {
         }
       );
     } catch (e) {
-      console.error(e);
-      cb(e);
+      view.message(_('msgError') + ' ' + e, 'error');
+      cb(_('msgError') + ' ' + e);
     }
 
   }
@@ -326,22 +328,34 @@ if (typeof window.Polybios === 'undefined') {
   window.addEventListener("hashchange", onHash, false);
 
   window.addEventListener('load', function () {
-    document.webL10n.ready(function () {
-      var settings;
-      function init() {
-        view = new Polybios.UI();
-
-        Polybios.Utils.initStore(settings);
-
-        if (settings.useAct) {
-          Polybios.Activity.init(settings);
+    var settings;
+    settings = Polybios.Utils.settingsGet();
+    // Wait for l10n to be ready
+    function ready(callback) {
+      if (document.webL10n.getReadyState === 'complete') {
+        if (document.webL10n.getLanguage() !== settings.lang) {
+          document.webL10n.setLanguage(settings.lang, callback);
+        } else {
+          callback();
         }
-      }
-      settings = Polybios.Utils.settingsGet();
-      if (document.webL10n.getLanguage() !== settings.lang) {
-        document.webL10n.setLanguage(settings.lang, init);
       } else {
-        init();
+        document.addEventListener('localized', function once() {
+          document.removeEventListener('localized', once);
+          if (document.webL10n.getLanguage() !== settings.lang) {
+            document.webL10n.setLanguage(settings.lang, callback);
+          } else {
+            callback();
+          }
+        });
+      }
+    }
+    ready(function () {
+      view = new Polybios.UI();
+
+      Polybios.Utils.initStore(settings);
+
+      if (settings.useAct) {
+        Polybios.Activity.init(settings);
       }
     });
   });
@@ -356,7 +370,7 @@ if (typeof window.Polybios === 'undefined') {
         if (req.status === 200) {
           cb(null, req.responseText);
         } else {
-          cb(null, {message: 'Key not found', level: 'warning'});
+          cb(null, {message: _('msgKeyNotFound', {id: keyID}), level: 'warning'});
         }
       }
     };
@@ -396,7 +410,7 @@ if (typeof window.Polybios === 'undefined') {
                   signed;
               if (verify.valid === true) {
                 signed = {
-                  message: 'Good signature by key ' + name,
+                  message: _('msgSignatureOk', {name: name}),
                   level: 'success',
                   key: armored,
                   data: msg.getLiteralData(),
@@ -404,19 +418,19 @@ if (typeof window.Polybios === 'undefined') {
                 };
                 cb(null, signed);
               } else {
-                cb(null, {message: 'Wrong signature by key ' + name, level: 'danger'});
+                cb(null, {message: _('msgSignatureKo', {name: name}), level: 'danger'});
               }
             });
           } catch (e) {
-            cb(null, {message: 'Unable to check message signature', level: 'warning'});
-            console.error(e);
+            cb(null, {message: _('msgSignatureErr'), level: 'warning'});
+            view.message(_('msgError') + ' ' + e, 'error');
           }
         }
         var keys;
         try {
           keys = msg.getSigningKeyIds();
           if (keys.length === 0) {
-            cb(null, {message: 'No key found', level: 'warning'});
+            cb(null, {message: _('msgSignatureNoKey'), level: 'warning'});
           } else {
             keys.forEach(function (keyID) {
               var key = null;
@@ -438,8 +452,8 @@ if (typeof window.Polybios === 'undefined') {
             });
           }
         } catch (e) {
-          cb(null, {message: 'Unable to check message signature', level: 'warning'});
-          console.error(e);
+          cb(null, {message: _('msgSignatureErr') + ' ' + e, level: 'warning'});
+          view.message(_('msgSignatureErr') + ' ' + e, 'error');
         }
       }
       if (/^-----BEGIN PGP SIGNED MESSAGE/gm.test(message.text)) {
@@ -477,8 +491,8 @@ if (typeof window.Polybios === 'undefined') {
           packetlist.read(input);
           checkSignatures(new openpgp.message.Message(packetlist));
         } catch (e) {
-          cb(null, {message: 'Unable to check message signature', level: 'warning'});
-          console.error(e);
+          cb(null, {message: _('msgSignatureErr') + ' ' + e, level: 'warning'});
+          view.message(_('msgSignatureErr') + ' ' + e, 'error');
         }
         /*
         message.attachments.forEach(function (attach) {
@@ -503,24 +517,24 @@ if (typeof window.Polybios === 'undefined') {
         if (key.isPublic()) {
           if (wallet.publicKeys.getForId(key.primaryKey.keyid.toHex()) === null) {
             wallet.publicKeys.push(key);
-            console.log("Imported public key " + id);
             wallet.store();
             view.listKeys();
-            cb(null, "Imported public key " + id);
+            view.message(_('msgImportOk', {id: id}));
+            cb(null, _('msgImportOk', {id: id}));
           } else {
-            console.log("Key already in wallet");
-            cb(null, "Key already in wallet");
+            view.message(_('msgImportAlready', {id: id}));
+            cb(null, _('msgImportAlready', {id: id}));
           }
         } else {
           if (wallet.privateKeys.getForId(key.primaryKey.keyid.toHex()) === null) {
             wallet.privateKeys.push(key);
-            console.log("Imported private key " + id);
             wallet.store();
             view.listKeys();
-            cb(null, "Imported private key " + id);
+            view.message(_('msgImportOk', {id: id}));
+            cb(null, _('msgImportOk', {id: id}));
           } else {
-            console.log("Key already in wallet");
-            cb(null, "Key already in wallet");
+            view.message(_('msgImportAlready', {id: id}));
+            cb(null, _('msgImportAlready', {id: id}));
           }
         }
       }
@@ -529,7 +543,7 @@ if (typeof window.Polybios === 'undefined') {
         if (keys.keys.length > 0) {
           keys.keys.forEach(doImport);
         } else {
-          cb("Enable to import keys : " + keys.err.join("\n"));
+          cb(_('msgImportKo') + ' ' + keys.err.join("\n"));
         }
       } else {
         doImport(message);

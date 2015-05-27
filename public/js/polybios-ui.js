@@ -615,8 +615,9 @@ if (typeof window.Polybios === 'undefined') {
         var s = Polybios.Utils.settingsGet();
         s.lang = this.value;
         Polybios.Utils.settingsSet(s);
-        self.message(_('msgSettingsSaved'));
-        document.webL10n.setLanguage(this.value);
+        document.webL10n.setLanguage(this.value, function () {
+          self.message(_('msgSettingsSaved'));
+        });
       });
       $.useAct.addEventListener('change', function () {
         template.node.dataset.type = this.value;
