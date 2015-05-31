@@ -269,6 +269,21 @@ if (typeof window.Polybios === 'undefined') {
           }
         });
       });
+      $.importFile.addEventListener('change', function importFile(ev) {
+        var reader, i, numFiles;
+        reader = new FileReader();
+        reader.onload = function (e) {
+          Polybios.KEYS.importKey(e.target.result, function (err, res) {
+            if (err) {
+              console.error(err);
+              self.message(err, 'error');
+            }
+          });
+        };
+        for (i = 0, numFiles = ev.target.files.length; i < numFiles; i++) {
+          reader.readAsText(ev.target.files[i]);
+        }
+      });
       target.innerHTML = '';
       target.appendChild(template.node);
       self.toggleDetail(true);
