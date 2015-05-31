@@ -42,6 +42,7 @@
       case 'POST':
       case 'PUT':
         fs.writeFile(storePath, req.body, function (err) {
+          fs.chmod(storePath, '600');
           res.setHeader("Content-Type", "application/json; charset=utf-8");
           if (err) {
             res.statusCode = 500;
