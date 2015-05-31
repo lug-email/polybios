@@ -224,6 +224,27 @@
           <dt data-l10n-id="templateDetailExpire"></dt>
           <dd name="expiration"></dd>
         </dl>
+        <form class="identities pure-form pure-form-aligned">
+          <h3 data-action="toggleOpen" class="closed"><a href="javascript:" data-l10n-id="templateDetailIdentities" ></a></h3>
+          <fieldset>
+            <div data-l10N-id="templateDetailAddUser"></div>
+            <div class="pure-control-group"> 
+              <label class=" " for="newUserName" data-l10n-id="templateGenerateName" ></label> 
+              <input type="text" class="pure-input-2-3" name="newUserName" /> 
+            </div> 
+            <div class="pure-control-group"> 
+              <label class=" " for="newUserAddress" data-l10n-id="templateGenerateAddress" ></label> 
+              <input type="text" class="pure-input-2-3" name="newUserAddress" /> 
+            </div> 
+            <div class="pure-control-group"> 
+              <label class=" " for="passphrase" data-l10n-id="templateGeneratePassphrase" ></label> 
+              <input type="password" class="pure-input-2-3" name="passphrase" /> 
+            </div>
+            <div class="pure-control-group">
+              <input type="button" class="pure-button pure-button-primary" name="addUser" data-l10n-id="templateDetailAdd" />
+            </div>
+          </fieldset>
+        </form>
         <h3 data-l10n-id="templateDetailSignatures" data-action="toggleOpen" class="closed"></h3>
         <ul name="sigs">
         </ul>

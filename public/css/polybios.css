@@ -58,6 +58,12 @@ textarea {
 .keyDetail dd {
   margin-left: 0;
 }
+.keyDetail .identities {
+  display: none;
+}
+.keyDetail.private .identities {
+  display: block;
+}
 @media (min-width: 40em) {
   .keyDetail dt {
     float: left;

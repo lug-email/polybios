@@ -57,15 +57,19 @@ if (typeof window.Polybios === 'undefined') {
 
     function getDetailTemplate(key, showImport) {
       console.log(key);
-      var template, primary, importBtn;
+      var template, primary, importBtn, $;
       template = new Template('keyDetail');
+      $ = template.vars;
       primary = key.primaryKey;
-      template.vars.armor.innerHTML = key.armor();
+      template.node.dataset.key = primary.keyid.toHex();
+
+      // Details {{{
+      $.armor.innerHTML = key.armor();
       template.qsv('status', getEnumValues('keyStatus')[key.verifyPrimaryKey()]);
       template.qsv('expiration', key.getExpirationTime() || 'never');
       template.qsv('hash', openpgp.util.get_hashAlgorithmString(key.getPreferredHashAlgorithm()));
       template.qsv('user', key.getPrimaryUser().user.userId.userid);
-      template.vars.users.innerHTML = key.users.map(function (user) {
+      $.users.innerHTML = key.users.map(function (user) {
         if (user.userId) {
           var escaped = escapeAddress(user),
               link    = '<a href="javascript:" data-action="sign" data-type="encrypt" data-dest="' + escaped + '">' +
@@ -81,7 +85,7 @@ if (typeof window.Polybios === 'undefined') {
       template.qsv('size', primary.getBitSize());
       if (key.isPrivate()) {
         template.qsv('type', 'Private');
-        template.vars.publicKey.innerHTML = key.toPublic().armor();
+        $.publicKey.innerHTML = key.toPublic().armor();
         template.node.classList.add('private');
       } else {
         template.qsv('type', 'Public');
@@ -96,7 +100,25 @@ if (typeof window.Polybios === 'undefined') {
           template.qsv('photo').appendChild(img);
         }
       });
-      // Signatures
+      // }}}
+
+      // Add user {{{
+      $.addUser.addEventListener('click', function () {
+        var userId;
+        userId = '"' + $.newUserName.value + '" <' + $.newUserAddress.value + '>';
+        Polybios.KEYS.addUser(key, $.passphrase.value, userId, function (err, newKey) {
+          if (err === null) {
+            self.message(_('msgUserAdded'), 'info');
+            wallet.store();
+            self.listKeys();
+          } else {
+            self.message(err, 'error');
+          }
+        });
+      });
+
+      // }}}
+      // Signatures {{{
       key.users.forEach(function (user) {
         if (user.userId) {
           var res = "<li>" + escapeAddress(user) + ' : ';
@@ -118,7 +140,9 @@ if (typeof window.Polybios === 'undefined') {
           template.qsv('sigs').innerHTML += res;
         }
       });
-      template.node.dataset.key = primary.keyid.toHex();
+      // }}}
+
+      // Import Button {{{
       if (showImport) {
         importBtn = document.createElement('input');
         importBtn.setAttribute('type', 'button');
@@ -134,6 +158,8 @@ if (typeof window.Polybios === 'undefined') {
         });
         template.qsv('actions').appendChild(importBtn);
       }
+      // }}}
+
       return template.node;
     }
 

@@ -565,6 +565,53 @@ if (typeof window.Polybios === 'undefined') {
         }
       };
       view.sign(node, message.text, cb);
+    },
+    addUser: function (key, pass, userId, cb) {
+      console.log(key, pass, userId);
+      //jshint bitwise: false
+      var packetlist, userIdPacket, signaturePacket, dataToSign, secretPacket, newKey;
+      if (!key.decrypt(pass)) {
+        cb(_('msgWrongPassphrase'));
+      } else {
+        packetlist = new openpgp.packet.List();
+        userIdPacket = new openpgp.packet.Userid();
+        userIdPacket.read(userId);
+        packetlist.push(userIdPacket);
+
+        secretPacket = key.getSigningKeyPacket();
+        if (!secretPacket.isDecrypted) {
+          cb(_('msgWrongPassphrase'));
+          console.error('Private key is not decrypted.');
+        } else {
+          packetlist.push(secretPacket);
+
+          dataToSign = {};
+          dataToSign.userid = userIdPacket;
+          dataToSign.key    = secretPacket;
+          signaturePacket   = new openpgp.packet.Signature();
+          signaturePacket.signatureType      = openpgp.enums.signature.cert_generic;
+          signaturePacket.publicKeyAlgorithm = secretPacket.algorithm;
+          signaturePacket.hashAlgorithm      = openpgp.config.prefer_hash_algorithm;
+          signaturePacket.keyFlags = [openpgp.enums.keyFlags.certify_keys | openpgp.enums.keyFlags.sign_data];
+          signaturePacket.preferredSymmetricAlgorithms   = [openpgp.enums.symmetric.aes256, openpgp.enums.symmetric.aes192, openpgp.enums.symmetric.aes128, openpgp.enums.symmetric.cast5, openpgp.enums.symmetric.tripledes];
+          signaturePacket.preferredHashAlgorithms        = [openpgp.enums.hash.sha256, openpgp.enums.hash.sha1, openpgp.enums.hash.sha512];
+          signaturePacket.preferredCompressionAlgorithms = [openpgp.enums.compression.zlib, openpgp.enums.compression.zip];
+
+          if (openpgp.config.integrity_protect) {
+            signaturePacket.features = [];
+            signaturePacket.features.push(1); // Modification Detection
+          }
+          signaturePacket.sign(secretPacket, dataToSign);
+          packetlist.push(signaturePacket);
+          newKey = openpgp.key.Key(packetlist);
+          if (newKey) {
+            key.update(newKey);
+            cb(null, key);
+          } else {
+            cb(_('msgUserError'));
+          }
+        }
+      }
     }
   };
 
