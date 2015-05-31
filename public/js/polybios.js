@@ -107,6 +107,7 @@ if (typeof window.Polybios === 'undefined') {
         onStore();
         break;
       case '':
+        view.message(_('msgNoStore'));
         view.settings();
         break;
       default:

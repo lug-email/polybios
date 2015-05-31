@@ -648,6 +648,7 @@ if (typeof window.Polybios === 'undefined') {
         template.node.dataset.type = this.value;
         var s = Polybios.Utils.settingsGet();
         s.storeType = this.value;
+        $.storeHelp.innerHTML = _('msgHelpStore' + this.value.replace(/^./, function (a) {return a.toUpperCase(); }));
         Polybios.Utils.settingsSet(s);
         Polybios.Utils.initStore(s);
         self.message(_('msgSettingsSaved'));
@@ -679,6 +680,7 @@ if (typeof window.Polybios === 'undefined') {
       $.lang.value      = settings.lang;
       $.useAct.checked  = settings.useAct;
       $.actServer.value = settings.actServer || '';
+      $.storeHelp.innerHTML = _('msgHelpStore' + settings.storeType.replace(/^./, function (a) {return a.toUpperCase(); }));
       target = document.getElementById('main');
       target.innerHTML = '';
       target.appendChild(template.node);

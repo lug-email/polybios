@@ -31,7 +31,7 @@ textarea {
   padding: 0;
 }
 #keysList li {
-  padding: .5em 1em;
+  padding: .1em 0;
   border-bottom: 1px solid #ddd;
   cursor: pointer;
 }
@@ -40,6 +40,7 @@ textarea {
 }
 #keysList li a {
   display: block;
+  margin: .5em 1em;
 }
 #keysList li:nth-of-type(2n+1) {
   background-color: #DDD;
