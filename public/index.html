@@ -146,6 +146,7 @@
             <textarea class="pure-input-1" name="message" rows="20"></textarea> 
           </div> 
           <div class="pure-control-group">
+            <input type="button" class="pure-button pure-button-primary" data-action="toClipboard" data-target="message" data-l10n-id="templateCopyClipboard" />
             <input type="button" class="pure-button pure-button-primary onSign"    name="sign"    data-l10n-id="templateSignSign"  />
             <input type="button" class="pure-button pure-button-primary onEncrypt" name="encrypt" data-l10n-id="templateSignEncrypt"  />
             <input type="button" class="pure-button pure-button-primary onFull"    name="full"    data-l10n-id="templateSignFull"  />
@@ -254,6 +255,9 @@
         <h3 data-action="toggleOpen" class="closed"><a href="javascript:" data-l10n-id="templateDetailKeys" ></a></h3>
         <div>
           <pre name="armor"></pre>
+          <div>
+            <input type="button" class="pure-button pure-button-primary" data-action="toClipboard" data-target="armor" data-l10n-id="templateCopyClipboard" />
+          </div>
           <pre name="publicKey"></pre>
         </div>
       </div>

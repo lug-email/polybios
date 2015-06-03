@@ -8,6 +8,23 @@ if (typeof window.Polybios === 'undefined') {
   var _;
   _ = document.webL10n.get;
 
+  // Copy content of a node into clipboard
+  function toClipboard(node) {
+    var sel, range;
+    if (node.tagName.toLowerCase() === 'textarea') {
+      node.focus();
+      node.select();
+    } else {
+      sel = window.getSelection();
+      sel.removeAllRanges();
+      range = document.createRange();
+      range.selectNode(node);
+      sel.addRange(range);
+    }
+    document.execCommand('copy');
+    sel.removeAllRanges();
+  }
+
   Polybios.UI = function () {
     var self = this,
         wallet;
@@ -744,6 +761,20 @@ if (typeof window.Polybios === 'undefined') {
         }
       } else {
         hide();
+      }
+    };
+    this.toClipboard = function (node) {
+      var parent = node.parentNode,
+          target;
+      while (parent && parent.tagName && parent.tagName.toLowerCase() !== 'form' && !parent.dataset.template) {
+        parent = parent.parentNode;
+      }
+      console.log(parent);
+      if (parent) {
+        target = parent.querySelector("[name='" + node.dataset.target + "']");
+        if (target) {
+          toClipboard(target);
+        }
       }
     };
     // }}}
