@@ -1,4 +1,4 @@
-//jshint browser: true, maxstatements: 35
+//jshint browser: true, maxstatements: 35, maxcomplexity: 12
 /*eslint no-use-before-define:0 */
 /*global Polybios: true, openpgp:true, RemoteStorage: true, remoteStorage: true */
 if (typeof window.Polybios === 'undefined') {
@@ -43,7 +43,8 @@ if (typeof window.Polybios === 'undefined') {
           storeType: '',
           lang: 'en-us',
           useAct: false,
-          actServer: ''
+          actServer: '',
+          devicePassword: ''
         };
       } else {
         settings = JSON.parse(settings);
@@ -106,6 +107,22 @@ if (typeof window.Polybios === 'undefined') {
         store = new openpgp.Keyring.localstore();
         onStore();
         break;
+      case 'cozy':
+        if (mainPass === '') {
+          mainPass = window.prompt(_('msgMainPass'));
+        }
+        if (!Polybios.Utils.settingsGet().devicePassword) {
+          Polybios.Cozy.register(window.prompt(_('msgCozyPassword')), function (err) {
+            if (err === null) {
+              store = new CozyStore(onStore);
+            } else {
+              view.message(_('msgRegisterErr') + ' ' + err, 'error');
+            }
+          });
+        } else {
+          store = new CozyStore(onStore);
+        }
+        break;
       case '':
         view.message(_('msgNoStore'));
         view.settings();
@@ -117,13 +134,183 @@ if (typeof window.Polybios === 'undefined') {
       }
     }
   };
+  Polybios.Cozy = {
+    register: function (password, cb) {
+      var location, url, body, xhr;
+      location = window.location;
+      url = location.protocol + '//' + location.host + '/device';
+      body = {
+        login: 'polybios',
+        permissions: {
+          "PGPKeys": {
+            "description": "Read and manage PGP keys"
+          }
+        }
+      };
+      xhr = new XMLHttpRequest();
+      xhr.open('POST', url, true);
+      xhr.onload = function () {
+        var res, settings;
+        res = JSON.parse(xhr.response);
+        if (res.password) {
+          settings = Polybios.Utils.settingsGet();
+          settings.devicePassword = res.password;
+          Polybios.Utils.settingsSet(settings);
+          cb(null);
+        } else if (res.error === "This name is already used") {
+          Polybios.Cozy.updateDevice(password, cb);
+        }
+      };
+      xhr.onerror = function (e) {
+        var err = "Request failed : " + e.target.status;
+        console.error(err);
+        cb(err);
+      };
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.setRequestHeader("Authorization", "Basic " + btoa("owner:" + password));
+      xhr.send(JSON.stringify(body));
+    },
+    updateDevice: function (password, cb) {
+      var location, url, body, xhr;
+      location = window.location;
+      url = location.protocol + '//' + location.host + '/device/polybios';
+      body = {
+        login: 'polybios',
+        permissions: {
+          "PGPKeys": {
+            "description": "Read and manage PGP keys"
+          }
+        }
+      };
+      xhr = new XMLHttpRequest();
+      xhr.open('PUT', url, true);
+      xhr.onload = function () {
+        var res, settings;
+        res = JSON.parse(xhr.response);
+        settings = Polybios.Utils.settingsGet();
+        settings.devicePassword = res.password;
+        Polybios.Utils.settingsSet(settings);
+        cb(null);
+      };
+      xhr.onerror = function (e) {
+        var err = "Request failed : " + e.target.status;
+        console.error(err);
+        cb(err);
+      };
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.setRequestHeader("Authorization", "Basic " + btoa("owner:" + password));
+      xhr.send(JSON.stringify(body));
+    },
+    unregister: function (password) {
+      var location, url, xhr;
+      location = window.location;
+      url = location.protocol + '//' + location.host + '/device/polybios';
+      xhr = new XMLHttpRequest();
+      xhr.open('DELETE', url, true);
+      xhr.onload = function () {
+        console.log('ok');
+      };
+      xhr.onerror = function (e) {
+        var err = "Request failed : " + e.target.status;
+        console.error(err);
+      };
+      xhr.setRequestHeader("Authorization", "Basic " + btoa("owner:" + password));
+      xhr.send();
+    },
+    create: function (id, data, cb) {
+      var location, url, body, xhr;
+      location = window.location;
+      url = location.protocol + '//' + location.host + '/ds-api/data/';
+      if (id !== null) {
+        url += id + '/';
+      }
+      body = {
+        docType: 'PGPKeys',
+        data: data
+      };
+      xhr = new XMLHttpRequest();
+      xhr.open('POST', url, true);
+      xhr.onload = function () {
+        cb(null);
+      };
+      xhr.onerror = function (e) {
+        var err = "Request failed : " + e.target.status;
+        console.error(err);
+        cb(err);
+      };
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.setRequestHeader("Authorization", "Basic " + btoa("polybios:" + Polybios.Utils.settingsGet().devicePassword));
+      xhr.send(JSON.stringify(body));
+    },
+    read: function (id, cb) {
+      var location, url, xhr;
+      location = window.location;
+      url = location.protocol + '//' + location.host + '/ds-api/data/' + id + '/';
+      xhr = new XMLHttpRequest();
+      xhr.open('GET', url, true);
+      xhr.onload = function () {
+        if (xhr.status === 200) {
+          cb(null, JSON.parse(xhr.response));
+        } else if (xhr.status === 404) {
+          cb(404);
+        } else {
+          cb(xhr.status);
+        }
+      };
+      xhr.onerror = function (e) {
+        var err = "Request failed : " + e.target.status;
+        console.error(err);
+        cb(err, null);
+      };
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.setRequestHeader("Authorization", "Basic " + btoa("polybios:" + Polybios.Utils.settingsGet().devicePassword));
+      xhr.send();
+    },
+    update: function (id, data, cb) {
+      var location, url, body, xhr;
+      location = window.location;
+      url = location.protocol + '//' + location.host + '/ds-api/data/' + id + '/';
+      body = {
+        docType: 'PGPKeys',
+        data: data
+      };
+      xhr = new XMLHttpRequest();
+      xhr.open('PUT', url, true);
+      xhr.onload = function () {
+        cb(null);
+      };
+      xhr.onerror = function (e) {
+        var err = "Request failed : " + e.target.status;
+        console.error(err);
+        cb(err);
+      };
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.setRequestHeader("Authorization", "Basic " + btoa("polybios:" + Polybios.Utils.settingsGet().devicePassword));
+      xhr.send(JSON.stringify(body));
+    },
+    del: function (cb) {
+      var location, url, xhr;
+      location = window.location;
+      url = location.protocol + '//' + location.host + '/ds-api/data/Polybios/';
+      xhr = new XMLHttpRequest();
+      xhr.open('DELETE', url, true);
+      xhr.onload = function () {
+        cb(null);
+      };
+      xhr.onerror = function (e) {
+        var err = "Request failed : " + e.target.status;
+        console.error(err);
+        cb(err);
+      };
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.setRequestHeader("Authorization", "Basic " + btoa("polybios:" + Polybios.Utils.settingsGet().devicePassword));
+      xhr.send();
+    }
+  };
 
-  function PolybiosStore(cb) {
-
-    var self = this,
-        xhr;
+  function DefaultStorage() {
+    var self = this;
     this.storage = {};
-
 
     function loadKeys(type) {
       var armoredKeys = self.storage[type],
@@ -140,6 +327,7 @@ if (typeof window.Polybios === 'undefined') {
       }
       return keys;
     }
+
     function storeKeys(type, keys) {
       var armoredKeys = [], i;
       for (i = 0; i < keys.length; i++) {
@@ -162,6 +350,18 @@ if (typeof window.Polybios === 'undefined') {
 
     this.storePrivate = function (keys) {
       storeKeys('private', keys);
+      self.doSave();
+    };
+
+  }
+
+  function PolybiosStore(cb) {
+    var self = this,
+        xhr;
+
+    DefaultStorage.call(this);
+
+    this.doSave = function () {
       var xhrPost = new XMLHttpRequest();
       xhrPost.open('POST', 'store', true);
       xhrPost.onload = function () {
@@ -212,48 +412,50 @@ if (typeof window.Polybios === 'undefined') {
 
   }
 
-  function RSStore(cb) {
-
+  function CozyStore(cb) {
     var self = this;
-    this.storage = {};
 
-    function loadKeys(type) {
-      var armoredKeys = self.storage[type],
-          keys = [], key, i;
-      if (armoredKeys && armoredKeys.length !== 0) {
-        for (i = 0; i < armoredKeys.length; i++) {
-          key = openpgp.key.readArmored(armoredKeys[i]);
-          if (!key.err) {
-            keys.push(key.keys[0]);
-          } else {
-            console.error(_('msgLoadkeysError') + ' ' + key.err, 'error');
-          }
+    DefaultStorage.call(this);
+
+    this.doSave = function () {
+      Polybios.Cozy.update('Polybios', Polybios.Utils.symCrypt(mainPass, JSON.stringify(self.storage)), function (err, res) {
+        if (err === null) {
+          view.message(_('msgKeyringStored'));
+        } else {
+          view.message(_('msgKeyringStoreErr') + ' ' + err, 'error');
         }
+      });
+    };
+
+    Polybios.Cozy.read('Polybios', function (err, res) {
+      if (err === null) {
+        self.storage = JSON.parse(Polybios.Utils.symDecrypt(mainPass, res.data));
+        cb();
+      } else if (err === 404) {
+        self.storage = {
+          public: [],
+          private: []
+        };
+        Polybios.Cozy.create('Polybios', Polybios.Utils.symCrypt(mainPass, JSON.stringify(self.storage)), function (errCreate, resCreate) {
+          if (errCreate === null) {
+            cb();
+          } else {
+            view.message(_('msgKeyringStoreErr') + ' ' + errCreate, 'error');
+            cb(_('msgKeyringLoadErr'));
+          }
+        });
+      } else {
+        cb(_('msgKeyringLoadErr'));
       }
-      return keys;
-    }
-    function storeKeys(type, keys) {
-      var armoredKeys = [], i;
-      for (i = 0; i < keys.length; i++) {
-        armoredKeys.push(keys[i].armor());
-      }
-      self.storage[type] = armoredKeys;
-    }
+    });
+  }
 
-    this.loadPublic = function () {
-      return loadKeys('public');
-    };
+  function RSStore(cb) {
+    var self = this;
 
-    this.loadPrivate = function () {
-      return loadKeys('private');
-    };
+    DefaultStorage.call(this);
 
-    this.storePublic = function (keys) {
-      storeKeys('public', keys);
-    };
-
-    this.storePrivate = function (keys) {
-      storeKeys('private', keys);
+    this.doSave = function () {
       remoteStorage.keystore.store(Polybios.Utils.symCrypt(mainPass, JSON.stringify(self.storage))).then(
         function () {
           view.message(_('msgKeyringStored'));
