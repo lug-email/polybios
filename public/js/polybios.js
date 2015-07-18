@@ -73,7 +73,7 @@ if (typeof window.Polybios === 'undefined') {
           if (err === 404) {
             view.message(_('msgStoreNoKeyring'), 'warning');
           } else {
-            view.message(_('msgError'), 'error');
+            view.message(_('msgError') + ' ' + err, 'error');
           }
         }
         wallet = new openpgp.Keyring(store);
@@ -111,17 +111,7 @@ if (typeof window.Polybios === 'undefined') {
         if (mainPass === '') {
           mainPass = window.prompt(_('msgMainPass'));
         }
-        if (!Polybios.Utils.settingsGet().devicePassword) {
-          Polybios.Cozy.register(window.prompt(_('msgCozyPassword')), function (err) {
-            if (err === null) {
-              store = new CozyStore(onStore);
-            } else {
-              view.message(_('msgRegisterErr') + ' ' + err, 'error');
-            }
-          });
-        } else {
-          store = new CozyStore(onStore);
-        }
+        store = new CozyStore(onStore);
         break;
       case '':
         view.message(_('msgNoStore'));
@@ -132,179 +122,6 @@ if (typeof window.Polybios === 'undefined') {
         view.settings();
         break;
       }
-    }
-  };
-  Polybios.Cozy = {
-    register: function (password, cb) {
-      var location, url, body, xhr;
-      location = window.location;
-      url = location.protocol + '//' + location.host + '/device';
-      body = {
-        login: 'polybios',
-        permissions: {
-          "PGPKeys": {
-            "description": "Read and manage PGP keys"
-          }
-        }
-      };
-      xhr = new XMLHttpRequest();
-      xhr.open('POST', url, true);
-      xhr.onload = function () {
-        var res, settings;
-        res = JSON.parse(xhr.response);
-        if (res.password) {
-          settings = Polybios.Utils.settingsGet();
-          settings.devicePassword = res.password;
-          Polybios.Utils.settingsSet(settings);
-          cb(null);
-        } else if (res.error === "This name is already used") {
-          Polybios.Cozy.updateDevice(password, cb);
-        }
-      };
-      xhr.onerror = function (e) {
-        var err = "Request failed : " + e.target.status;
-        console.error(err);
-        cb(err);
-      };
-      xhr.setRequestHeader("Content-Type", "application/json");
-      xhr.setRequestHeader("Authorization", "Basic " + btoa("owner:" + password));
-      xhr.send(JSON.stringify(body));
-    },
-    updateDevice: function (password, cb) {
-      var location, url, body, xhr;
-      location = window.location;
-      url = location.protocol + '//' + location.host + '/device/polybios';
-      body = {
-        login: 'polybios',
-        permissions: {
-          "PGPKeys": {
-            "description": "Read and manage PGP keys"
-          }
-        }
-      };
-      xhr = new XMLHttpRequest();
-      xhr.open('PUT', url, true);
-      xhr.onload = function () {
-        var res, settings;
-        res = JSON.parse(xhr.response);
-        settings = Polybios.Utils.settingsGet();
-        settings.devicePassword = res.password;
-        Polybios.Utils.settingsSet(settings);
-        cb(null);
-      };
-      xhr.onerror = function (e) {
-        var err = "Request failed : " + e.target.status;
-        console.error(err);
-        cb(err);
-      };
-      xhr.setRequestHeader("Content-Type", "application/json");
-      xhr.setRequestHeader("Authorization", "Basic " + btoa("owner:" + password));
-      xhr.send(JSON.stringify(body));
-    },
-    unregister: function (password) {
-      var location, url, xhr;
-      location = window.location;
-      url = location.protocol + '//' + location.host + '/device/polybios';
-      xhr = new XMLHttpRequest();
-      xhr.open('DELETE', url, true);
-      xhr.onload = function () {
-        console.log('ok');
-      };
-      xhr.onerror = function (e) {
-        var err = "Request failed : " + e.target.status;
-        console.error(err);
-      };
-      xhr.setRequestHeader("Authorization", "Basic " + btoa("owner:" + password));
-      xhr.send();
-    },
-    create: function (id, data, cb) {
-      var location, url, body, xhr;
-      location = window.location;
-      url = location.protocol + '//' + location.host + '/ds-api/data/';
-      if (id !== null) {
-        url += id + '/';
-      }
-      body = {
-        docType: 'PGPKeys',
-        data: data
-      };
-      xhr = new XMLHttpRequest();
-      xhr.open('POST', url, true);
-      xhr.onload = function () {
-        cb(null);
-      };
-      xhr.onerror = function (e) {
-        var err = "Request failed : " + e.target.status;
-        console.error(err);
-        cb(err);
-      };
-      xhr.setRequestHeader("Content-Type", "application/json");
-      xhr.setRequestHeader("Authorization", "Basic " + btoa("polybios:" + Polybios.Utils.settingsGet().devicePassword));
-      xhr.send(JSON.stringify(body));
-    },
-    read: function (id, cb) {
-      var location, url, xhr;
-      location = window.location;
-      url = location.protocol + '//' + location.host + '/ds-api/data/' + id + '/';
-      xhr = new XMLHttpRequest();
-      xhr.open('GET', url, true);
-      xhr.onload = function () {
-        if (xhr.status === 200) {
-          cb(null, JSON.parse(xhr.response));
-        } else if (xhr.status === 404) {
-          cb(404);
-        } else {
-          cb(xhr.status);
-        }
-      };
-      xhr.onerror = function (e) {
-        var err = "Request failed : " + e.target.status;
-        console.error(err);
-        cb(err, null);
-      };
-      xhr.setRequestHeader("Content-Type", "application/json");
-      xhr.setRequestHeader("Authorization", "Basic " + btoa("polybios:" + Polybios.Utils.settingsGet().devicePassword));
-      xhr.send();
-    },
-    update: function (id, data, cb) {
-      var location, url, body, xhr;
-      location = window.location;
-      url = location.protocol + '//' + location.host + '/ds-api/data/' + id + '/';
-      body = {
-        docType: 'PGPKeys',
-        data: data
-      };
-      xhr = new XMLHttpRequest();
-      xhr.open('PUT', url, true);
-      xhr.onload = function () {
-        cb(null);
-      };
-      xhr.onerror = function (e) {
-        var err = "Request failed : " + e.target.status;
-        console.error(err);
-        cb(err);
-      };
-      xhr.setRequestHeader("Content-Type", "application/json");
-      xhr.setRequestHeader("Authorization", "Basic " + btoa("polybios:" + Polybios.Utils.settingsGet().devicePassword));
-      xhr.send(JSON.stringify(body));
-    },
-    del: function (cb) {
-      var location, url, xhr;
-      location = window.location;
-      url = location.protocol + '//' + location.host + '/ds-api/data/Polybios/';
-      xhr = new XMLHttpRequest();
-      xhr.open('DELETE', url, true);
-      xhr.onload = function () {
-        cb(null);
-      };
-      xhr.onerror = function (e) {
-        var err = "Request failed : " + e.target.status;
-        console.error(err);
-        cb(err);
-      };
-      xhr.setRequestHeader("Content-Type", "application/json");
-      xhr.setRequestHeader("Authorization", "Basic " + btoa("polybios:" + Polybios.Utils.settingsGet().devicePassword));
-      xhr.send();
     }
   };
 
@@ -413,12 +230,16 @@ if (typeof window.Polybios === 'undefined') {
   }
 
   function CozyStore(cb) {
-    var self = this;
+    var self = this, cozy, password;
 
     DefaultStorage.call(this);
 
     this.doSave = function () {
-      Polybios.Cozy.update('Polybios', Polybios.Utils.symCrypt(mainPass, JSON.stringify(self.storage)), function (err, res) {
+      var data = {
+        docType: 'PGPKeys',
+        data: Polybios.Utils.symCrypt(mainPass, JSON.stringify(self.storage))
+      };
+      cozy.update('Polybios', data, function (err, res) {
         if (err === null) {
           view.message(_('msgKeyringStored'));
         } else {
@@ -427,27 +248,56 @@ if (typeof window.Polybios === 'undefined') {
       });
     };
 
-    Polybios.Cozy.read('Polybios', function (err, res) {
+    function onCozy(err, devicePassword) {
       if (err === null) {
-        self.storage = JSON.parse(Polybios.Utils.symDecrypt(mainPass, res.data));
-        cb();
-      } else if (err === 404) {
-        self.storage = {
-          public: [],
-          private: []
-        };
-        Polybios.Cozy.create('Polybios', Polybios.Utils.symCrypt(mainPass, JSON.stringify(self.storage)), function (errCreate, resCreate) {
-          if (errCreate === null) {
+        var settings = Polybios.Utils.settingsGet();
+        settings.devicePassword = devicePassword;
+        Polybios.Utils.settingsSet(settings);
+        cozy.read('Polybios', function (readErr, res) {
+          var data;
+          if (readErr === null) {
+            self.storage = JSON.parse(Polybios.Utils.symDecrypt(mainPass, res.data));
             cb();
+          } else if (readErr === 404) {
+            self.storage = {
+              public: [],
+              private: []
+            };
+            data = {
+              docType: 'PGPKeys',
+              data: Polybios.Utils.symCrypt(mainPass, JSON.stringify(self.storage))
+            };
+            cozy.create('Polybios', data, function (errCreate, resCreate) {
+              if (errCreate === null) {
+                cb();
+              } else {
+                view.message(_('msgKeyringStoreErr') + ' ' + errCreate, 'error');
+                cb(_('msgKeyringLoadErr'));
+              }
+            });
           } else {
-            view.message(_('msgKeyringStoreErr') + ' ' + errCreate, 'error');
             cb(_('msgKeyringLoadErr'));
           }
         });
       } else {
-        cb(_('msgKeyringLoadErr'));
+        cb(_('msgRegisterErr') + ' ' + err, 'error');
       }
-    });
+    }
+    password = Polybios.Utils.settingsGet().devicePassword;
+    if (password) {
+      cozy = new window.Cozy('polybios', null, password, function (err, devicePassword) {
+        setTimeout(function () {
+          onCozy(err, devicePassword);
+        }, 0);
+      });
+    } else {
+      password = window.prompt(_('msgCozyPassword'));
+      cozy = new window.Cozy('polybios', password, null, function (err, devicePassword) {
+        setTimeout(function () {
+          onCozy(err, devicePassword);
+        }, 0);
+      });
+    }
   }
 
   function RSStore(cb) {
