@@ -203,7 +203,7 @@
           <input type="button" class="pure-button pure-button-primary" name="save"    data-l10n-id="templateSettingsSave"  />
         </div>
       </form>;
-      <!-- }}} Sign -->
+      <!-- }}} Settings -->
       <!-- keyDetail {{{ -->
       <div data-template="keyDetail" class="keyDetail">
         <h2><span name="id"></span> — <span name="user"></span></h2>
@@ -264,6 +264,20 @@
         </div>
       </div>
       <!-- }}} keyDetail -->
+      <!-- Passphrase {{{ -->
+      <form data-template="passphrase" class="pure-form pure-form-aligned" onsubmit="return false;">
+        <div name="title"></div>
+        <fieldset>
+          <div class="pure-control-group">
+            <label name="label" class="" for="pass"></label>
+            <input type="password" name="pass" class="pure-input-2-3"></input>
+          </div>
+        </fieldset>
+        <div class="pure-control-group">
+          <input type="button" class="pure-button pure-button-primary" name="save" data-l10n-id="templateCommonValidate"  />
+        </div>
+      </form>;
+      <!-- }}} Passphrase -->
     </div>
   </body>
 </html>

@@ -87,15 +87,9 @@ if (typeof window.Polybios === 'undefined') {
       }
       switch (settings.storeType) {
       case 'server':
-        if (mainPass === '') {
-          mainPass = window.prompt(_('msgMainPass'));
-        }
         store = new PolybiosStore(onStore);
         break;
       case 'rs':
-        if (mainPass === '') {
-          mainPass = window.prompt(_('msgMainPass'));
-        }
         // Init remoteStorage
         remoteStorage.access.claim('keystore', 'rw');
         remoteStorage.displayWidget();
@@ -108,9 +102,6 @@ if (typeof window.Polybios === 'undefined') {
         onStore();
         break;
       case 'cozy':
-        if (mainPass === '') {
-          mainPass = window.prompt(_('msgMainPass'));
-        }
         store = new CozyStore(onStore);
         break;
       case '':
@@ -291,11 +282,15 @@ if (typeof window.Polybios === 'undefined') {
         }, 0);
       });
     } else {
-      password = window.prompt(_('msgCozyPassword'));
-      cozy = new window.Cozy('polybios', password, null, function (err, devicePassword) {
-        setTimeout(function () {
-          onCozy(err, devicePassword);
-        }, 0);
+      view.passphrase(_('msgCozyPassword'), '', function (errPass, pass) {
+        if (errPass === null) {
+          password = pass;
+          cozy = new window.Cozy('polybios', password, null, function (err, devicePassword) {
+            setTimeout(function () {
+              onCozy(err, devicePassword);
+            }, 0);
+          });
+        }
       });
     }
   }
@@ -405,7 +400,16 @@ if (typeof window.Polybios === 'undefined') {
     ready(function () {
       view = new Polybios.UI();
 
-      Polybios.Utils.initStore(settings);
+      if (mainPass === '') {
+        view.passphrase(_('msgMainPass'), _('templateSettingsPass'), function (err, pass) {
+          if (err === null) {
+            mainPass = pass;
+            Polybios.Utils.initStore(settings);
+          }
+        });
+      } else {
+        Polybios.Utils.initStore(settings);
+      }
 
       if (settings.useAct) {
         Polybios.Activity.init(settings);
@@ -560,8 +564,12 @@ if (typeof window.Polybios === 'undefined') {
 
   Polybios.KEYS = {
     passphrase: function (data, cb) {
-      window.prompt(_('Passphrase'));
-      cb(null, wallet);
+      view.passphrase(_('msgMainPass'), _('msgTemplateSettingsPass'), function (err, pass) {
+        if (err === null) {
+          mainPass = pass;
+          cb(null, wallet);
+        }
+      });
     },
     importKey: function (message, cb) {
       var keys;

@@ -777,6 +777,18 @@ if (typeof window.Polybios === 'undefined') {
         }
       }
     };
+    // Display a modal to ask a password
+    this.passphrase = function (title, label, cb) {
+      var template, modal;
+      template = new Template('passphrase');
+      modal    = window.modal(template.node);
+      template.vars.title.innerHTML = title;
+      template.vars.label.innerHTML = label;
+      template.vars.save.addEventListener('click', function () {
+        cb(null, template.vars.pass.value);
+        modal();
+      });
+    };
     // }}}
   };
 }());
