@@ -67,6 +67,18 @@ if (typeof window.Polybios === 'undefined') {
       document.cookie = "settings=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     },
     initStore: function (settings) {
+      function withMainpassDo(fct) {
+        if (mainPass === '') {
+          view.passphrase(_('msgMainPass'), _('templateSettingsPass'), function (err, pass) {
+            if (err === null) {
+              mainPass = pass;
+              fct();
+            }
+          });
+        } else {
+          fct();
+        }
+      }
       function onStore(err, res) {
         var loadEvent;
         if (err) {
@@ -94,15 +106,21 @@ if (typeof window.Polybios === 'undefined') {
         remoteStorage.access.claim('keystore', 'rw');
         remoteStorage.displayWidget();
         remoteStorage.on('connected', function () {
-          store = new RSStore(onStore);
+          withMainpassDo(function () {
+            store = new RSStore(onStore);
+          });
         });
         break;
       case 'local':
-        store = new openpgp.Keyring.localstore();
-        onStore();
+        withMainpassDo(function () {
+          store = new openpgp.Keyring.localstore();
+          onStore();
+        });
         break;
       case 'cozy':
-        store = new CozyStore(onStore);
+        withMainpassDo(function () {
+          store = new CozyStore(onStore);
+        });
         break;
       case '':
         view.message(_('msgNoStore'));
@@ -239,6 +257,18 @@ if (typeof window.Polybios === 'undefined') {
       });
     };
 
+    function askCozyPassword() {
+      view.passphrase(_('msgCozyPassword'), '', function (errPass, pass) {
+        if (errPass === null) {
+          password = pass;
+          cozy = new window.Cozy('polybios', password, null, function (err, devicePassword) {
+            setTimeout(function () {
+              onCozy(err, devicePassword);
+            }, 0);
+          });
+        }
+      });
+    }
     function onCozy(err, devicePassword) {
       if (err === null) {
         var settings = Polybios.Utils.settingsGet();
@@ -271,7 +301,12 @@ if (typeof window.Polybios === 'undefined') {
           }
         });
       } else {
-        cb(_('msgRegisterErr') + ' ' + err, 'error');
+        if (err === "Bad credentials") {
+          view.message(_('msgCozyBadCredentials'), 'error');
+          askCozyPassword();
+        } else {
+          cb(_('msgRegisterErr') + ' ' + err, 'error');
+        }
       }
     }
     password = Polybios.Utils.settingsGet().devicePassword;
@@ -282,16 +317,7 @@ if (typeof window.Polybios === 'undefined') {
         }, 0);
       });
     } else {
-      view.passphrase(_('msgCozyPassword'), '', function (errPass, pass) {
-        if (errPass === null) {
-          password = pass;
-          cozy = new window.Cozy('polybios', password, null, function (err, devicePassword) {
-            setTimeout(function () {
-              onCozy(err, devicePassword);
-            }, 0);
-          });
-        }
-      });
+      askCozyPassword();
     }
   }
 
@@ -400,16 +426,7 @@ if (typeof window.Polybios === 'undefined') {
     ready(function () {
       view = new Polybios.UI();
 
-      if (mainPass === '') {
-        view.passphrase(_('msgMainPass'), _('templateSettingsPass'), function (err, pass) {
-          if (err === null) {
-            mainPass = pass;
-            Polybios.Utils.initStore(settings);
-          }
-        });
-      } else {
-        Polybios.Utils.initStore(settings);
-      }
+      Polybios.Utils.initStore(settings);
 
       if (settings.useAct) {
         Polybios.Activity.init(settings);

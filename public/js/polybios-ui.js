@@ -684,6 +684,9 @@ if (typeof window.Polybios === 'undefined') {
         s.useAct = this.checked;
         Polybios.Utils.settingsSet(s);
         self.message(_('msgSettingsSaved'));
+        if (this.checked) {
+          Polybios.Activity.init(s);
+        }
       });
       $.actServer.addEventListener('change', function () {
         template.node.dataset.type = this.value;

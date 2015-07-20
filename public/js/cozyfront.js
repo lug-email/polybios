@@ -38,6 +38,8 @@
           cb(null, _devicePassword);
         } else if (res.error === "This name is already used") {
           self.updateApplication(cb);
+        } else if (res.error === "Bad credentials") {
+          cb("Bad credentials");
         }
       };
       xhr.onerror = function (e) {
