@@ -4,6 +4,13 @@
 if (typeof window.Polybios === 'undefined') {
   window.Polybios = {};
 }
+window.addEventListener('error', function (msg, url, line, col, error) {
+  "use strict";
+  console.error(msg, url, line, col, error);
+  if (error) {
+    console.error(error.stack);
+  }
+});
 (function () {
   "use strict";
   var wallet, store, mainPass = '', view, _;
@@ -33,8 +40,13 @@ if (typeof window.Polybios === 'undefined') {
     },
     // Symetric decrypt
     symDecrypt: function (pass, source) {
-      pass = btoa(openpgp.crypto.hash.md5(pass));
-      return openpgp.crypto.cfb.decrypt('aes256', pass, atob(source));
+      try {
+        pass = btoa(openpgp.crypto.hash.md5(pass));
+        return openpgp.crypto.cfb.decrypt('aes256', pass, atob(source));
+      } catch (e) {
+        view.message(_('msgError') + ' ' + e, 'error');
+        return '';
+      }
     },
     settingsGet: function () {
       var settings = decodeURIComponent(document.cookie.replace(new RegExp("(?:(?:^|.*;)\\s*settings\\s*\\=\\s*([^;]*).*$)|^.*$"), "$1"));
@@ -207,13 +219,19 @@ if (typeof window.Polybios === 'undefined') {
       xhr = new XMLHttpRequest();
       xhr.open('GET', 'store', true);
       xhr.onload = function () {
+        var decrypted, error = null;
         if (xhr.status === 200) {
           try {
-            self.storage = JSON.parse(Polybios.Utils.symDecrypt(mainPass, xhr.responseText));
+            decrypted = Polybios.Utils.symDecrypt(mainPass, xhr.responseText);
+            if (decrypted === '') {
+              error = _('msgKeyringLoadErr');
+            } else {
+              self.storage = JSON.parse(decrypted);
+            }
           } catch (e) {
             self.storage = JSON.parse(xhr.responseText);
           }
-          cb();
+          cb(error);
         } else if (xhr.status === 404) {
           self.storage = {
             public: [],
@@ -275,10 +293,19 @@ if (typeof window.Polybios === 'undefined') {
         settings.devicePassword = devicePassword;
         Polybios.Utils.settingsSet(settings);
         cozy.read('Polybios', function (readErr, res) {
-          var data;
+          var data, decrypted, error;
           if (readErr === null) {
-            self.storage = JSON.parse(Polybios.Utils.symDecrypt(mainPass, res.data));
-            cb();
+            try {
+              decrypted = Polybios.Utils.symDecrypt(mainPass, res.data);
+              if (decrypted === '') {
+                error = _('msgKeyringLoadErr');
+              } else {
+                self.storage = JSON.parse(decrypted);
+              }
+            } catch (e) {
+              error = e;
+            }
+            cb(error);
           } else if (readErr === 404) {
             self.storage = {
               public: [],
@@ -366,6 +393,7 @@ if (typeof window.Polybios === 'undefined') {
 
       remoteStorage.keystore.load().then(
         function (data) {
+          var decrypted, error = null;
           if (typeof data === 'undefined') {
             self.storage = {
               public: [],
@@ -373,7 +401,12 @@ if (typeof window.Polybios === 'undefined') {
             };
           } else {
             try {
-              self.storage = JSON.parse(Polybios.Utils.symDecrypt(mainPass, data.keyring));
+              decrypted = Polybios.Utils.symDecrypt(mainPass, data.keyring);
+              if (decrypted === '') {
+                error = _('msgKeyringLoadErr');
+              } else {
+                self.storage = JSON.parse(decrypted);
+              }
             } catch (e) {
               view.message(_('msgError') + ' ' + e, 'error');
               self.storage = {
@@ -382,7 +415,7 @@ if (typeof window.Polybios === 'undefined') {
               };
             }
           }
-          cb();
+          cb(error);
         },
         function (error) {
           self.storage = {
