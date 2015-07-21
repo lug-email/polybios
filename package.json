@@ -1,6 +1,6 @@
 {
   "name": "polybios",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Just a ugly frontend for OpenPGP.js",
   "main": "server.js",
   "dependencies": {

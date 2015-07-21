@@ -313,7 +313,7 @@ if (typeof window.Polybios === 'undefined') {
         });
       });
       $.importFile.addEventListener('change', function importFile(ev) {
-        var reader, i, numFiles;
+        var reader, i, numFiles, file;
         reader = new FileReader();
         reader.onload = function (e) {
           Polybios.KEYS.importKey(e.target.result, function (err, res) {
@@ -324,7 +324,12 @@ if (typeof window.Polybios === 'undefined') {
           });
         };
         for (i = 0, numFiles = ev.target.files.length; i < numFiles; i++) {
-          reader.readAsText(ev.target.files[i]);
+          file = ev.target.files[i];
+          if (/\.gpg/.test(file.name)) {
+            reader.readAsBinaryString(file);
+          } else {
+            reader.readAsText(file);
+          }
         }
       });
       target.innerHTML = '';

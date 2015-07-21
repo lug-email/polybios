@@ -650,7 +650,39 @@ window.addEventListener('error', function (msg, url, line, col, error) {
         }
       }
       if (typeof message === 'string') {
-        keys = openpgp.key.readArmored(message);
+        try {
+          if (/BEGIN PGP/.test(message)) {
+            keys = openpgp.key.readArmored(message);
+          } else {
+            // manually do the import
+            keys = {
+              keys: [],
+              err: []
+            };
+            (function () {
+              var packetlist, keyIndex, i, oneKeyList, newKey;
+              packetlist = new openpgp.packet.List();
+              packetlist.read(message);
+              keyIndex = packetlist.indexOfTag(openpgp.enums.packet.publicKey, openpgp.enums.packet.secretKey);
+              if (keyIndex.length > 0) {
+                for (i = 0; i < keyIndex.length; i++) {
+                  oneKeyList = packetlist.slice(keyIndex[i], keyIndex[i + 1]);
+                  try {
+                    newKey = new openpgp.key.Key(oneKeyList);
+                    keys.keys.push(newKey);
+                  } catch (e) {
+                    console.error(e);
+                    keys.err = keys.err || [];
+                    keys.err.push(e);
+                  }
+                }
+                keys.forEach(doImport);
+              }
+            }());
+          }
+        } catch (e) {
+          console.error(e);
+        }
         if (keys.keys.length > 0) {
           keys.keys.forEach(doImport);
         } else {
