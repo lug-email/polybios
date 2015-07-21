@@ -787,10 +787,13 @@ if (typeof window.Polybios === 'undefined') {
       modal    = window.modal(template.node);
       template.vars.title.innerHTML = title;
       template.vars.label.innerHTML = label;
-      template.vars.save.addEventListener('click', function () {
+      template.vars.pass.focus();
+      function validate() {
         cb(null, template.vars.pass.value);
         modal();
-      });
+      }
+      template.vars.save.addEventListener('click', validate);
+      template.vars.pass.addEventListener('change', validate);
     };
     // }}}
   };
