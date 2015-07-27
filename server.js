@@ -7,7 +7,7 @@
       serveStatic = require('serve-static'),
       fs          = require('fs'),
       path        = require('path'),
-      app, port, host;
+      app, port, host, store;
 
   process.on('uncaughtException', function (err) {
     console.error("Uncaught Exception");
@@ -23,35 +23,49 @@
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(bodyParser.text({limit: '10mb'}));
 
-  // Override default app configuration
-  app.use('/store', function (req, res) {
+  function FileStore() {
     var storePath = path.join(__dirname, '/store');
+    function get(req, res) {
+      fs.stat(storePath, function (errStat, stats) {
+        if (errStat || typeof stats === 'undefined') {
+          res.statusCode = 404;
+          res.end('');
+        } else {
+          res.statusCode = 200;
+          res.setHeader("Content-Type", "text/plain; charset=utf-8");
+          fs.createReadStream(storePath).pipe(res);
+        }
+      });
+    }
+    function set(req, res) {
+      fs.writeFile(storePath, req.body, function (err) {
+        fs.chmod(storePath, '600');
+        res.setHeader("Content-Type", "application/json; charset=utf-8");
+        if (err) {
+          res.statusCode = 500;
+          res.end(JSON.stringify({res: err}));
+        } else {
+          res.statusCode = 200;
+          res.end(JSON.stringify({res: 'ok'}));
+        }
+      });
+    }
+    return {
+      get: get,
+      set: set
+    };
+  }
+
+  store = new FileStore();
+
+  app.use('/store', function (req, res) {
     switch (req.method) {
       case 'GET':
-        fs.stat(storePath, function (errStat, stats) {
-          if (errStat || typeof stats === 'undefined') {
-            res.statusCode = 404;
-            res.end('');
-          } else {
-            res.statusCode = 200;
-            res.setHeader("Content-Type", "text/plain; charset=utf-8");
-            fs.createReadStream(storePath).pipe(res);
-          }
-        });
+        store.get(req, res);
         break;
       case 'POST':
       case 'PUT':
-        fs.writeFile(storePath, req.body, function (err) {
-          fs.chmod(storePath, '600');
-          res.setHeader("Content-Type", "application/json; charset=utf-8");
-          if (err) {
-            res.statusCode = 500;
-            res.end(JSON.stringify({res: err}));
-          } else {
-            res.statusCode = 200;
-            res.end(JSON.stringify({res: 'ok'}));
-          }
-        });
+        store.set(req, res);
         break;
     }
   });
