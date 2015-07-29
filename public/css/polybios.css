@@ -164,3 +164,6 @@ textarea {
     width: 100%;
   }
 }
+html.cozy .settingStore {
+  display: none;
+}

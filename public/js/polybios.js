@@ -49,12 +49,13 @@ window.addEventListener('error', function (msg, url, line, col, error) {
       }
     },
     settingsGet: function () {
-      var settings = decodeURIComponent(document.cookie.replace(new RegExp("(?:(?:^|.*;)\\s*settings\\s*\\=\\s*([^;]*).*$)|^.*$"), "$1"));
+      var settings = decodeURIComponent(document.cookie.replace(new RegExp("(?:(?:^|.*;)\\s*settings\\s*\\=\\s*([^;]*).*$)|^.*$"), "$1")),
+          onCozy = document.documentElement.classList.contains('cozy');
       if (settings === '') {
         settings = {
-          storeType: '',
+          storeType: onCozy ? 'server' : '',
           lang: 'en-us',
-          useAct: false,
+          useAct: onCozy ? true : false,
           actServer: '',
           devicePassword: ''
         };
@@ -111,7 +112,9 @@ window.addEventListener('error', function (msg, url, line, col, error) {
       }
       switch (settings.storeType) {
       case 'server':
-        store = new PolybiosStore(onStore);
+        withMainpassDo(function () {
+          store = new PolybiosStore(onStore);
+        });
         break;
       case 'rs':
         // Init remoteStorage
