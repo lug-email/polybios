@@ -799,6 +799,7 @@ if (typeof window.Polybios === 'undefined') {
       }
       template.vars.save.addEventListener('click', validate);
       template.vars.pass.addEventListener('change', validate);
+      template.vars.cancel.addEventListener('click', modal);
     };
     // }}}
   };
